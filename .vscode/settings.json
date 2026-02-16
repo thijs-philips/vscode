@@ -8,6 +8,10 @@
 		"scripts/test.sh": true,
 		"scripts/test-integration.bat": true,
 		"scripts/test-integration.sh": true,
+		"/^node --version$/": {
+			"approve": true,
+			"matchCommandLine": true
+		}
 	},
 	"chat.viewSessions.enabled": true,
 	"chat.editing.explainChanges.enabled": true,

@@ -153,5 +153,43 @@
 		"github-enterprise": [
 			"GitHub.copilot-chat"
 		]
+	},
+	"extensionsGallery": {
+		"serviceUrl": "https://marketplace.visualstudio.com/_apis/public/gallery",
+		"itemUrl": "https://marketplace.visualstudio.com/items",
+		"cacheUrl": "https://vscode.blob.core.windows.net/gallery/index",
+		"controlUrl": ""
+	},
+	"extensionEnabledApiProposals": {
+		"GitHub.copilot": [
+			"inlineCompletionsAdditions"
+		],
+		"GitHub.copilot-chat": [
+			"chatParticipantAdditions",
+			"chatProvider",
+			"chatVariableResolver",
+			"defaultChatParticipant",
+			"devDeviceId",
+			"editorInsets",
+			"findFiles2New",
+			"inlineCompletionsAdditions",
+			"interactive",
+			"interactiveUserActions",
+			"mappedEditsProvider",
+			"languageModels",
+			"languageModelsCustomizations",
+			"languageModelsSystem",
+			"lmTools",
+			"textSearchProvider",
+			"aiRelatedInformation",
+			"portsAttributes",
+			"quickPickSortByLabel",
+			"terminalDataWriteEvent",
+			"terminalExecuteCommandEvent",
+			"terminalSelection",
+			"terminalQuickFixProvider",
+			"chatParticipantPrivate",
+			"embeddings"
+		]
 	}
 }
