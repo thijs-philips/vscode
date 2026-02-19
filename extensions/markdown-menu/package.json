@@ -1,0 +1,70 @@
+{
+  "name": "markdown-menu",
+  "displayName": "Markdown Menu",
+  "description": "Adds a top-level Markdown menu to the menu bar",
+  "version": "1.0.0",
+  "publisher": "vscode",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.100.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "enabledApiProposals": [
+    "menuAccess"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "main": "./out/extension.js",
+  "capabilities": {
+    "virtualWorkspaces": true,
+    "untrustedWorkspaces": {
+      "supported": true
+    }
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "markdownMenu.bold",
+        "title": "Toggle Bold"
+      },
+      {
+        "command": "markdownMenu.italic",
+        "title": "Toggle Italic"
+      },
+      {
+        "command": "markdownMenu.heading",
+        "title": "Insert Heading"
+      },
+      {
+        "command": "markdownMenu.link",
+        "title": "Insert Link"
+      },
+      {
+        "command": "markdownMenu.codeBlock",
+        "title": "Insert Code Block"
+      },
+      {
+        "command": "markdownMenu.bulletList",
+        "title": "Insert Bullet List"
+      },
+      {
+        "command": "markdownMenu.preview",
+        "title": "Open Preview"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "gulp compile-extension:markdown-menu",
+    "watch": "gulp watch-extension:markdown-menu"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.100.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/vscode.git"
+  }
+}

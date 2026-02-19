@@ -3451,6 +3451,29 @@ export interface ExtHostChatSessionsShape {
 	$provideHandleOptionsChange(providerHandle: number, sessionResource: UriComponents, updates: ReadonlyArray<ChatSessionOptionUpdateDto>, token: CancellationToken): Promise<void>;
 }
 
+// --- Menu Access
+
+export interface IMenuItemInfoDto {
+	readonly menuId: string;
+	readonly commandId: string | undefined;
+	readonly title: string;
+	readonly group: string | undefined;
+	readonly order: number | undefined;
+	readonly submenuId: string | undefined;
+	readonly isBuiltin: boolean;
+}
+
+export interface MainThreadMenusShape extends IDisposable {
+	$getMenuItems(menuId: string): Promise<IMenuItemInfoDto[]>;
+	$addMenuItem(handle: number, menuId: string, commandId: string, title: string, group: string | undefined, order: number | undefined): void;
+	$addSubmenu(handle: number, menuId: string, submenuId: string, title: string, group: string | undefined, order: number | undefined): void;
+	$removeMenuItem(handle: number): void;
+}
+
+export interface ExtHostMenusShape {
+	$onDidChangeMenu(menuId: string): void;
+}
+
 // --- proxy identifiers
 
 export const MainContext = {
@@ -3533,6 +3556,7 @@ export const MainContext = {
 	MainThreadChatSessions: createProxyIdentifier<MainThreadChatSessionsShape>('MainThreadChatSessions'),
 	MainThreadChatOutputRenderer: createProxyIdentifier<MainThreadChatOutputRendererShape>('MainThreadChatOutputRenderer'),
 	MainThreadChatContext: createProxyIdentifier<MainThreadChatContextShape>('MainThreadChatContext'),
+	MainThreadMenus: createProxyIdentifier<MainThreadMenusShape>('MainThreadMenus'),
 };
 
 export const ExtHostContext = {
@@ -3611,4 +3635,5 @@ export const ExtHostContext = {
 	ExtHostMcp: createProxyIdentifier<ExtHostMcpShape>('ExtHostMcp'),
 	ExtHostDataChannels: createProxyIdentifier<ExtHostDataChannelsShape>('ExtHostDataChannels'),
 	ExtHostChatSessions: createProxyIdentifier<ExtHostChatSessionsShape>('ExtHostChatSessions'),
+	ExtHostMenus: createProxyIdentifier<ExtHostMenusShape>('ExtHostMenus'),
 };

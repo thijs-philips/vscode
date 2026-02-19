@@ -74,6 +74,7 @@ import { ExtHostLanguages } from './extHostLanguages.js';
 import { IExtHostLocalizationService } from './extHostLocalizationService.js';
 import { IExtHostManagedSockets } from './extHostManagedSockets.js';
 import { IExtHostMpcService } from './extHostMcp.js';
+import { ExtHostMenus } from './extHostMenus.js';
 import { ExtHostMessageService } from './extHostMessageService.js';
 import { ExtHostNotebookController } from './extHostNotebook.js';
 import { ExtHostNotebookDocumentSaveParticipant } from './extHostNotebookDocumentSaveParticipant.js';
@@ -244,6 +245,8 @@ export function createApiFactoryAndRegisterActors(accessor: ServicesAccessor): I
 	const extHostEmbeddings = rpcProtocol.set(ExtHostContext.ExtHostEmbeddings, new ExtHostEmbeddings(rpcProtocol));
 
 	rpcProtocol.set(ExtHostContext.ExtHostMcp, accessor.get(IExtHostMpcService));
+
+	const extHostMenus = rpcProtocol.set(ExtHostContext.ExtHostMenus, new ExtHostMenus(rpcProtocol));
 
 	// Check that no named customers are missing
 	const expected = Object.values<ProxyIdentifier<any>>(ExtHostContext);
@@ -575,6 +578,26 @@ export function createApiFactoryAndRegisterActors(accessor: ServicesAccessor): I
 			get testResults() {
 				checkProposedApiEnabled(extension, 'testObserver');
 				return extHostTesting.results;
+			},
+		};
+
+		// namespace: menus
+		const menus: typeof vscode.menus = {
+			getMenuItems(menuId: string): Thenable<vscode.MenuItemInfo[]> {
+				checkProposedApiEnabled(extension, 'menuAccess');
+				return extHostMenus.getMenuItems(menuId);
+			},
+			get onDidChangeMenu() {
+				checkProposedApiEnabled(extension, 'menuAccess');
+				return _asExtensionEvent(extHostMenus.onDidChangeMenu);
+			},
+			addMenuItem(menuId: string, options: vscode.MenuItemOptions): vscode.Disposable {
+				checkProposedApiEnabled(extension, 'menuAccess');
+				return extHostMenus.addMenuItem(menuId, options);
+			},
+			addSubmenu(menuId: string, options: vscode.SubmenuOptions): { submenuId: string; disposable: vscode.Disposable } {
+				checkProposedApiEnabled(extension, 'menuAccess');
+				return extHostMenus.addSubmenu(menuId, options);
 			},
 		};
 
@@ -1782,6 +1805,7 @@ export function createApiFactoryAndRegisterActors(accessor: ServicesAccessor): I
 			l10n,
 			languages,
 			lm,
+			menus,
 			notebooks,
 			scm,
 			speech,
