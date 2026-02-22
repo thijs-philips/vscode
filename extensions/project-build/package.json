@@ -1,0 +1,44 @@
+{
+  "name": "project-build",
+  "displayName": "Project Build Menu",
+  "description": "Adds a top-level Build menu with project-type-specific build commands",
+  "version": "1.0.0",
+  "publisher": "vscode",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.100.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "enabledApiProposals": [
+    "menuAccess"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "capabilities": {
+    "virtualWorkspaces": false,
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "Build commands execute shell processes"
+    }
+  },
+  "contributes": {
+    "commands": [
+      { "command": "projectBuild.build",   "title": "Build Project" },
+      { "command": "projectBuild.test",    "title": "Run Tests" },
+      { "command": "projectBuild.run",     "title": "Run / Start" },
+      { "command": "projectBuild.clean",   "title": "Clean" },
+      { "command": "projectBuild.install", "title": "Install Dependencies" }
+    ]
+  },
+  "scripts": {
+    "compile": "gulp compile-extension:project-build",
+    "watch": "gulp watch-extension:project-build"
+  },
+  "devDependencies": {
+    "@types/node": "22.x"
+  }
+}

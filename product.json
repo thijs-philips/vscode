@@ -166,20 +166,32 @@
 		],
 		"GitHub.copilot-chat": [
 			"chatParticipantAdditions",
+			"chatPromptFiles",
 			"chatProvider",
+			"chatSessionsProvider",
 			"chatVariableResolver",
+			"contribChatEditorInlineGutterMenu",
+			"contribCommentThreadAdditionalMenu",
+			"contribCommentsViewThreadMenus",
+			"contribEditorContentMenu",
+			"contribLanguageModelToolSets",
+			"contribSourceControlInputBoxMenu",
 			"defaultChatParticipant",
 			"devDeviceId",
 			"editorInsets",
+			"environmentPower",
+			"findFiles2",
 			"findFiles2New",
 			"inlineCompletionsAdditions",
 			"interactive",
 			"interactiveUserActions",
-			"mappedEditsProvider",
 			"languageModels",
 			"languageModelsCustomizations",
 			"languageModelsSystem",
 			"lmTools",
+			"mappedEditsProvider",
+			"mcpServerDefinitions",
+			"tabInputMultiDiff",
 			"textSearchProvider",
 			"aiRelatedInformation",
 			"portsAttributes",
@@ -189,7 +201,8 @@
 			"terminalSelection",
 			"terminalQuickFixProvider",
 			"chatParticipantPrivate",
-			"embeddings"
+			"embeddings",
+			"workspaceTrust"
 		]
 	}
 }

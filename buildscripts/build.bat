@@ -5,13 +5,8 @@ echo === VS Code Build ===
 pushd %~dp0\..
 
 echo.
-echo [1/2] Compiling core TypeScript...
+echo Compiling core and built-in extensions...
 call npm run compile
-if errorlevel 1 goto fail
-
-echo.
-echo [2/2] Compiling built-in extensions...
-call npm run compile-extensions
 if errorlevel 1 goto fail
 
 echo.

@@ -1,0 +1,109 @@
+{
+	"name": "text-toolkit",
+	"displayName": "Text Toolkit",
+	"description": "Comprehensive text manipulation tools accessible from a top-level menu",
+	"version": "1.0.0",
+	"publisher": "vscode",
+	"license": "MIT",
+	"engines": {
+		"vscode": "^1.100.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"enabledApiProposals": [
+		"menuAccess"
+	],
+	"activationEvents": [
+		"*"
+	],
+	"main": "./out/extension.js",
+	"capabilities": {
+		"virtualWorkspaces": true,
+		"untrustedWorkspaces": {
+			"supported": true
+		}
+	},
+	"contributes": {
+		"commands": [
+			{ "command": "textToolkit.toUpperCase", "title": "UPPERCASE" },
+			{ "command": "textToolkit.toLowerCase", "title": "lowercase" },
+			{ "command": "textToolkit.toProperCase", "title": "Proper Case" },
+			{ "command": "textToolkit.toProperCaseBlend", "title": "Proper Case (blend)" },
+			{ "command": "textToolkit.toSentenceCase", "title": "Sentence case" },
+			{ "command": "textToolkit.toSentenceCaseBlend", "title": "Sentence case (blend)" },
+			{ "command": "textToolkit.toInvertCase", "title": "iNVERT cASE" },
+
+			{ "command": "textToolkit.duplicateLine", "title": "Duplicate Current Line" },
+			{ "command": "textToolkit.removeDuplicateLines", "title": "Remove Duplicate Lines" },
+			{ "command": "textToolkit.removeConsecutiveDuplicates", "title": "Remove Consecutive Duplicate Lines" },
+			{ "command": "textToolkit.splitLines", "title": "Split Lines" },
+			{ "command": "textToolkit.joinLines", "title": "Join Lines" },
+			{ "command": "textToolkit.moveLineUp", "title": "Move Up Current Line" },
+			{ "command": "textToolkit.moveLineDown", "title": "Move Down Current Line" },
+			{ "command": "textToolkit.removeEmptyLines", "title": "Remove Empty Lines" },
+			{ "command": "textToolkit.removeBlankLines", "title": "Remove Empty Lines (Containing Blank Characters)" },
+			{ "command": "textToolkit.insertBlankLineAbove", "title": "Insert Blank Line Above Current" },
+			{ "command": "textToolkit.insertBlankLineBelow", "title": "Insert Blank Line Below Current" },
+			{ "command": "textToolkit.reverseLineOrder", "title": "Reverse Line Order" },
+			{ "command": "textToolkit.randomizeLineOrder", "title": "Randomize Line Order" },
+
+			{ "command": "textToolkit.sortLexAsc", "title": "Sort Lines Lexicographically Ascending" },
+			{ "command": "textToolkit.sortLexDesc", "title": "Sort Lines Lexicographically Descending" },
+			{ "command": "textToolkit.sortLexAscIgnoreCase", "title": "Sort Lines Lexicographically Ascending (Ignoring Case)" },
+			{ "command": "textToolkit.sortLexDescIgnoreCase", "title": "Sort Lines Lexicographically Descending (Ignoring Case)" },
+			{ "command": "textToolkit.sortIntAsc", "title": "Sort Lines as Integers Ascending" },
+			{ "command": "textToolkit.sortIntDesc", "title": "Sort Lines as Integers Descending" },
+			{ "command": "textToolkit.sortDecCommaAsc", "title": "Sort Lines as Decimals (Comma) Ascending" },
+			{ "command": "textToolkit.sortDecCommaDesc", "title": "Sort Lines as Decimals (Comma) Descending" },
+			{ "command": "textToolkit.sortDecDotAsc", "title": "Sort Lines as Decimals (Dot) Ascending" },
+			{ "command": "textToolkit.sortDecDotDesc", "title": "Sort Lines as Decimals (Dot) Descending" },
+			{ "command": "textToolkit.deduplicateKeepFirst", "title": "Deduplicate Lines (Keep First)" },
+			{ "command": "textToolkit.deduplicateKeepLast", "title": "Deduplicate Lines (Keep Last)" },
+
+			{ "command": "textToolkit.eolWindows", "title": "Windows (CR LF)" },
+			{ "command": "textToolkit.eolUnix", "title": "Unix (LF)" },
+			{ "command": "textToolkit.eolMac", "title": "Mac (CR)" },
+
+			{ "command": "textToolkit.trimTrailing", "title": "Trim Trailing Space" },
+			{ "command": "textToolkit.trimLeading", "title": "Trim Leading Space" },
+			{ "command": "textToolkit.trimBoth", "title": "Trim Leading and Trailing Space" },
+			{ "command": "textToolkit.eolToSpace", "title": "EOL to Space" },
+			{ "command": "textToolkit.tabToSpace", "title": "TAB to Space" },
+			{ "command": "textToolkit.spaceToTabAll", "title": "Space to TAB (All)" },
+			{ "command": "textToolkit.spaceToTabLeading", "title": "Space to TAB (Leading)" },
+
+			{ "command": "textToolkit.copyFullPath", "title": "Copy Current Full File Path" },
+			{ "command": "textToolkit.copyFilename", "title": "Copy Current Filename" },
+			{ "command": "textToolkit.copyDirPath", "title": "Copy Current Dir. Path" },
+
+			{ "command": "textToolkit.keepLinesMatching", "title": "Keep Lines Matching…" },
+			{ "command": "textToolkit.removeLinesMatching", "title": "Remove Lines Matching…" },
+			{ "command": "textToolkit.keepLinesNotMatching", "title": "Keep Lines Not Matching…" },
+			{ "command": "textToolkit.copyMatchesToNew", "title": "Copy Matches to New Document…" },
+			{ "command": "textToolkit.moveMatchesToNew", "title": "Move Matches to New Document…" },
+
+			{ "command": "textToolkit.insertNumberSequence", "title": "Insert Number Sequence…" },
+			{ "command": "textToolkit.insertRomanSequence", "title": "Insert Roman Number Sequence…" },
+			{ "command": "textToolkit.insertLetterSequence", "title": "Insert Letter Sequence…" },
+			{ "command": "textToolkit.incrementNumbers", "title": "Increment Numbers in Selection…" },
+
+			{ "command": "textToolkit.joinWithDelimiter", "title": "Join Lines with Delimiter…" },
+			{ "command": "textToolkit.splitByDelimiter", "title": "Split by Delimiter / Pattern…" },
+
+			{ "command": "textToolkit.alignByDelimiter", "title": "Align by Delimiter…" },
+			{ "command": "textToolkit.alignToColumns", "title": "Align to Columns (by Whitespace)…" }
+		]
+	},
+	"scripts": {
+		"compile": "gulp compile-extension:text-toolkit",
+		"watch": "gulp watch-extension:text-toolkit"
+	},
+	"devDependencies": {
+		"@types/vscode": "^1.100.0"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/vscode.git"
+	}
+}
