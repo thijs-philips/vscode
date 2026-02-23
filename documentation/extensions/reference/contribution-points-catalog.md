@@ -344,7 +344,5 @@ extension.collector.info('Info: FYI message');              // Informational
 
 ## Further Reading
 
-- [Using Extension Points](./01-using-extension-points.md) — Extension developer guide
-- [Architecture Overview](./02-architecture-overview.md) — Internal architecture
-- [Implementation Guide](./03-implementation-guide.md) — Adding new extension points
-- [Testing Extension APIs](./05-testing-extension-apis.md) — Testing patterns
+- [Extension API Guide](./extension-api-guide.md) — Extension developer guide
+- [Learnings & Guidelines](../guidelines.md) — Architecture and implementation patterns

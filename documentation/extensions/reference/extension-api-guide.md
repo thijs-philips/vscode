@@ -779,7 +779,7 @@ Some APIs are experimental and gated behind the `enabledApiProposals` field. The
 }
 ```
 
-Proposed API type definitions live in `src/vscode-dts/vscode.proposed.*.d.ts`. See [03-implementation-guide.md](./03-implementation-guide.md) for how to create new proposed APIs.
+Proposed API type definitions live in `src/vscode-dts/vscode.proposed.*.d.ts`. See [Learnings & Guidelines](../guidelines.md) for how to create new proposed APIs.
 
 ---
 
@@ -788,5 +788,5 @@ Proposed API type definitions live in `src/vscode-dts/vscode.proposed.*.d.ts`. S
 - [VS Code Extension API Reference](https://code.visualstudio.com/api/references/vscode-api)
 - [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
 - [Extension Capabilities](https://code.visualstudio.com/api/extension-capabilities/overview)
-- [Architecture Overview](./02-architecture-overview.md) — How VS Code exposes these APIs internally
-- [Implementation Guide](./03-implementation-guide.md) — How to add new extension points to VS Code core
+- [Contribution Points Catalog](./contribution-points-catalog.md) — Complete reference of all contribution points
+- [Learnings & Guidelines](../guidelines.md) — Architecture and implementation patterns

@@ -11,6 +11,10 @@
 		"/^node --version$/": {
 			"approve": true,
 			"matchCommandLine": true
+		},
+		"/^node tools/extract_recommendation/merge-recommendations\\.cjs$/": {
+			"approve": true,
+			"matchCommandLine": true
 		}
 	},
 	"chat.viewSessions.enabled": true,
