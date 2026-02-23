@@ -1,8 +1,9 @@
-// merge-recommendations.js
-// Extracts extension recommendation fields from an installed VS Code's product.json
-// and merges them into this repo's product.json.
+// merge-recommendations.cjs
+// Extracts product configuration fields from an installed VS Code's product.json
+// and merges them into this repo's product.json. Covers extension recommendations,
+// MCP gallery, extension trust/kind, UI/help links, Settings Sync, and more.
 //
-// Usage: node tools/extract_recommendation/merge-recommendations.js [vscode-install-path]
+// Usage: node tools/extract_recommendation/merge-recommendations.cjs [vscode-install-path]
 // Default install path: C:\Program Files\Microsoft VS Code
 
 const fs = require('fs');
@@ -12,7 +13,8 @@ const VSCODE_INSTALL = process.argv[2] || 'C:\\Program Files\\Microsoft VS Code'
 const sourceProductPath = path.join(VSCODE_INSTALL, 'resources', 'app', 'product.json');
 const targetProductPath = path.join(__dirname, '..', '..', 'product.json');
 
-const RECOMMENDATION_KEYS = [
+const KEYS_TO_COPY = [
+	// --- Extension recommendations ---
 	'extensionRecommendations',
 	'configBasedExtensionTips',
 	'exeBasedExtensionTips',
@@ -22,6 +24,51 @@ const RECOMMENDATION_KEYS = [
 	'keymapExtensionTips',
 	'webExtensionTips',
 	'languageExtensionTips',
+
+	// --- MCP gallery / marketplace ---
+	'mcpGallery',
+
+	// --- Strongly recommended (functionality) ---
+	'quality',
+	'extensionAllowedBadgeProviders',
+	'extensionAllowedBadgeProvidersRegex',
+	'extensionPublisherOrgs',
+	'trustedExtensionPublishers',
+	'extensionProperties',
+	'extensionKind',
+	'extensionPointExtensionKind',
+	'extensionVirtualWorkspacesSupport',
+	'extensionSyncedKeys',
+	'extensionsForceVersionByQuality',
+	'extensionsEnabledWithApiProposalVersion',
+	'linkProtectionTrustedDomains',
+	'trustedExtensionProtocolHandlers',
+	'commandPaletteSuggestedCommandIds',
+	'commonlyUsedSettings',
+	'configurationSync.store',
+	'editSessions.store',
+	'chatParticipantRegistry',
+	'chatSessionRecommendations',
+	'profileTemplatesUrl',
+	'remoteDefaultExtensionsIfInstalledLocally',
+	'extensionConfigurationPolicy',
+
+	// --- Recommended (UI/help links) ---
+	'documentationUrl',
+	'serverDocumentationUrl',
+	'releaseNotesUrl',
+	'keyboardShortcutsUrlMac',
+	'keyboardShortcutsUrlLinux',
+	'keyboardShortcutsUrlWin',
+	'introductoryVideosUrl',
+	'tipsAndTricksUrl',
+	'newsletterSignupUrl',
+	'youTubeUrl',
+	'requestFeatureUrl',
+	'reportMarketplaceIssueUrl',
+	'privacyStatementUrl',
+	'downloadUrl',
+	'webUrl',
 ];
 
 console.log(`Source: ${sourceProductPath}`);
@@ -38,7 +85,7 @@ const source = JSON.parse(fs.readFileSync(sourceProductPath, 'utf8'));
 const target = JSON.parse(fs.readFileSync(targetProductPath, 'utf8'));
 
 let added = 0;
-for (const key of RECOMMENDATION_KEYS) {
+for (const key of KEYS_TO_COPY) {
 	if (source[key] !== undefined) {
 		target[key] = source[key];
 		added++;
