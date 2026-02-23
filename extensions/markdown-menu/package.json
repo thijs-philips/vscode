@@ -12,7 +12,8 @@
     "Other"
   ],
   "enabledApiProposals": [
-    "menuAccess"
+    "menuAccess",
+    "contribGlobalToolbar"
   ],
   "activationEvents": [
     "*"
@@ -28,33 +29,79 @@
     "commands": [
       {
         "command": "markdownMenu.bold",
-        "title": "Toggle Bold"
+        "title": "Toggle Bold",
+        "icon": "$(bold)"
       },
       {
         "command": "markdownMenu.italic",
-        "title": "Toggle Italic"
+        "title": "Toggle Italic",
+        "icon": "$(italic)"
       },
       {
         "command": "markdownMenu.heading",
-        "title": "Insert Heading"
+        "title": "Insert Heading",
+        "icon": "$(symbol-structure)"
       },
       {
         "command": "markdownMenu.link",
-        "title": "Insert Link"
+        "title": "Insert Link",
+        "icon": "$(link)"
       },
       {
         "command": "markdownMenu.codeBlock",
-        "title": "Insert Code Block"
+        "title": "Insert Code Block",
+        "icon": "$(code)"
       },
       {
         "command": "markdownMenu.bulletList",
-        "title": "Insert Bullet List"
+        "title": "Insert Bullet List",
+        "icon": "$(list-unordered)"
       },
       {
         "command": "markdownMenu.preview",
-        "title": "Open Preview"
+        "title": "Open Preview",
+        "icon": "$(open-preview)"
       }
-    ]
+    ],
+    "menus": {
+      "window/toolbar": [
+        {
+          "command": "markdownMenu.bold",
+          "group": "markdown_format",
+          "when": "editorLangId == markdown"
+        },
+        {
+          "command": "markdownMenu.italic",
+          "group": "markdown_format",
+          "when": "editorLangId == markdown"
+        },
+        {
+          "command": "markdownMenu.heading",
+          "group": "markdown_format",
+          "when": "editorLangId == markdown"
+        },
+        {
+          "command": "markdownMenu.link",
+          "group": "markdown_insert",
+          "when": "editorLangId == markdown"
+        },
+        {
+          "command": "markdownMenu.codeBlock",
+          "group": "markdown_insert",
+          "when": "editorLangId == markdown"
+        },
+        {
+          "command": "markdownMenu.bulletList",
+          "group": "markdown_insert",
+          "when": "editorLangId == markdown"
+        },
+        {
+          "command": "markdownMenu.preview",
+          "group": "markdown_preview",
+          "when": "editorLangId == markdown"
+        }
+      ]
+    }
   },
   "scripts": {
     "compile": "gulp compile-extension:markdown-menu",

@@ -1,0 +1,63 @@
+{
+	"name": "toolbar-sample",
+	"displayName": "Toolbar Sample",
+	"description": "Minimal extension demonstrating the global toolbar strip",
+	"version": "0.0.1",
+	"publisher": "vscode",
+	"license": "MIT",
+	"engines": {
+		"vscode": "^1.100.0"
+	},
+	"enabledApiProposals": [
+		"contribGlobalToolbar"
+	],
+	"main": "./out/extension.js",
+	"capabilities": {
+		"virtualWorkspaces": true,
+		"untrustedWorkspaces": {
+			"supported": true
+		}
+	},
+	"contributes": {
+		"commands": [
+			{
+				"command": "toolbarSample.hello",
+				"title": "Hello from Toolbar",
+				"icon": "$(smiley)"
+			},
+			{
+				"command": "toolbarSample.build",
+				"title": "Build",
+				"icon": "$(tools)"
+			},
+			{
+				"command": "toolbarSample.run",
+				"title": "Run",
+				"icon": "$(play)"
+			}
+		],
+		"menus": {
+			"window/toolbar": [
+				{
+					"command": "toolbarSample.hello",
+					"group": "navigation"
+				},
+				{
+					"command": "toolbarSample.build",
+					"group": "navigation"
+				},
+				{
+					"command": "toolbarSample.run",
+					"group": "navigation"
+				}
+			]
+		}
+	},
+	"scripts": {
+		"compile": "tsc -p ./tsconfig.json",
+		"watch": "tsc -watch -p ./tsconfig.json"
+	},
+	"devDependencies": {
+		"@types/vscode": "^1.100.0"
+	}
+}

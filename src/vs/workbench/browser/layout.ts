@@ -42,6 +42,7 @@ import { IExtensionService } from '../services/extensions/common/extensions.js';
 import { ILogService } from '../../platform/log/common/log.js';
 import { DeferredPromise, Promises } from '../../base/common/async.js';
 import { IBannerService } from '../services/banner/browser/bannerService.js';
+import { IToolbarStripService } from '../services/toolbarStrip/browser/toolbarStripService.js';
 import { IPaneCompositePartService } from '../services/panecomposite/browser/panecomposite.js';
 import { AuxiliaryBarPart } from './parts/auxiliarybar/auxiliaryBarPart.js';
 import { ITelemetryService } from '../../platform/telemetry/common/telemetry.js';
@@ -248,6 +249,11 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 			quickPickTop = top;
 		}
 
+		if (this.isVisible(Parts.TOOLBARSTRIP_PART)) {
+			top += this.getPart(Parts.TOOLBARSTRIP_PART).maximumHeight;
+			quickPickTop = top;
+		}
+
 		const isCommandCenterVisible = titlebarVisible && this.configurationService.getValue<boolean>(LayoutSettings.COMMAND_CENTER) !== false;
 		if (isCommandCenterVisible) {
 			// If the command center is visible then the quickinput
@@ -266,6 +272,7 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 	private workbenchGrid!: SerializableGrid<ISerializableView>;
 
 	private titleBarPartView!: ISerializableView;
+	private toolbarStripPartView!: ISerializableView;
 	private bannerPartView!: ISerializableView;
 	private activityBarPartView!: ISerializableView;
 	private sideBarPartView!: ISerializableView;
@@ -329,6 +336,7 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 		this.notificationService = accessor.get(INotificationService);
 		this.statusBarService = accessor.get(IStatusbarService);
 		accessor.get(IBannerService);
+		accessor.get(IToolbarStripService);
 
 		// Listeners
 		this.registerLayoutListeners();
@@ -1322,6 +1330,8 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 				return !this.stateModel.getRuntimeValue(LayoutStateKeys.EDITOR_HIDDEN);
 			case Parts.BANNER_PART:
 				return this.initialized ? this.workbenchGrid.isViewVisible(this.bannerPartView) : false;
+			case Parts.TOOLBARSTRIP_PART:
+				return this.initialized ? this.workbenchGrid.isViewVisible(this.toolbarStripPartView) : false;
 			default:
 				return false; // any other part cannot be hidden
 		}
@@ -1579,6 +1589,7 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 
 	protected createWorkbenchLayout(): void {
 		const titleBar = this.getPart(Parts.TITLEBAR_PART);
+		const toolbarStripPart = this.getPart(Parts.TOOLBARSTRIP_PART);
 		const bannerPart = this.getPart(Parts.BANNER_PART);
 		const editorPart = this.getPart(Parts.EDITOR_PART);
 		const activityBar = this.getPart(Parts.ACTIVITYBAR_PART);
@@ -1589,6 +1600,7 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 
 		// View references for all parts
 		this.titleBarPartView = titleBar;
+		this.toolbarStripPartView = toolbarStripPart;
 		this.bannerPartView = bannerPart;
 		this.sideBarPartView = sideBar;
 		this.activityBarPartView = activityBar;
@@ -1599,6 +1611,7 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 
 		const viewMap = {
 			[Parts.ACTIVITYBAR_PART]: this.activityBarPartView,
+			[Parts.TOOLBARSTRIP_PART]: this.toolbarStripPartView,
 			[Parts.BANNER_PART]: this.bannerPartView,
 			[Parts.TITLEBAR_PART]: this.titleBarPartView,
 			[Parts.EDITOR_PART]: this.editorPartView,
@@ -1620,7 +1633,7 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 		this.workbenchGrid = workbenchGrid;
 		this.workbenchGrid.edgeSnapping = this.state.runtime.mainWindowFullscreen;
 
-		for (const part of [titleBar, editorPart, activityBar, panelPart, sideBar, statusBar, auxiliaryBarPart, bannerPart]) {
+		for (const part of [titleBar, toolbarStripPart, editorPart, activityBar, panelPart, sideBar, statusBar, auxiliaryBarPart, bannerPart]) {
 			this._register(part.onDidVisibilityChange(visible => {
 				if (!this.inMaximizedAuxiliaryBarTransition) {
 
@@ -2250,6 +2263,8 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 				return this.setEditorHidden(hidden);
 			case Parts.BANNER_PART:
 				return this.setBannerHidden(hidden);
+			case Parts.TOOLBARSTRIP_PART:
+				return void this.workbenchGrid.setViewVisible(this.toolbarStripPartView, !hidden);
 			case Parts.AUXILIARYBAR_PART:
 				return this.setAuxiliaryBarHidden(hidden);
 			case Parts.PANEL_PART:
@@ -2579,6 +2594,12 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 				data: { type: Parts.TITLEBAR_PART },
 				size: titleBarHeight,
 				visible: this.isVisible(Parts.TITLEBAR_PART, mainWindow)
+			},
+			{
+				type: 'leaf',
+				data: { type: Parts.TOOLBARSTRIP_PART },
+				size: this.toolbarStripPartView.minimumHeight,
+				visible: false
 			},
 			{
 				type: 'leaf',

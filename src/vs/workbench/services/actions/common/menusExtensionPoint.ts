@@ -36,6 +36,12 @@ interface IAPIMenu {
 
 const apiMenus: IAPIMenu[] = [
 	{
+		key: 'window/toolbar',
+		id: MenuId.GlobalToolbar,
+		description: localize('menus.globalToolbar', "The global toolbar strip below the title bar"),
+		proposed: 'contribGlobalToolbar'
+	},
+	{
 		key: 'commandPalette',
 		id: MenuId.CommandPalette,
 		description: localize('menus.commandPalette', "The Command Palette"),
