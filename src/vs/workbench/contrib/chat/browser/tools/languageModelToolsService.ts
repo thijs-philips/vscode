@@ -62,7 +62,8 @@ interface ITrackedCall {
 }
 
 const enum AutoApproveStorageKeys {
-	GlobalAutoApproveOptIn = 'chat.tools.global.autoApprove.optIn'
+	GlobalAutoApproveOptIn = 'chat.tools.global.autoApprove.optIn',
+	GlobalAutoApproveUserOverride = 'chat.tools.global.autoApprove.userOverride',
 }
 
 const SkipAutoApproveConfirmationKey = 'vscode.chat.tools.global.autoApprove.testMode';
@@ -103,6 +104,7 @@ export class LanguageModelToolsService extends Disposable implements ILanguageMo
 	private readonly _tools = new Map<string, IToolEntry>();
 	private readonly _toolContextKeys = new Set<string>();
 	private readonly _ctxToolsCount: IContextKey<number>;
+	private readonly _ctxGlobalAutoApproveActive: IContextKey<boolean>;
 
 	private readonly _callsByRequestId = new Map<string, ITrackedCall[]>();
 
@@ -143,16 +145,23 @@ export class LanguageModelToolsService extends Disposable implements ILanguageMo
 			}
 		}));
 
+		this._ctxToolsCount = ChatContextKeys.Tools.toolsCount.bindTo(_contextKeyService);
+		this._ctxGlobalAutoApproveActive = ChatContextKeys.Tools.globalAutoApproveActive.bindTo(_contextKeyService);
+
 		// Clear out warning accepted state if the setting is disabled
 		this._register(Event.runAndSubscribe(this._configurationService.onDidChangeConfiguration, e => {
 			if (!e || e.affectsConfiguration(ChatConfiguration.GlobalAutoApprove)) {
 				if (this._configurationService.getValue(ChatConfiguration.GlobalAutoApprove) !== true) {
 					this._storageService.remove(AutoApproveStorageKeys.GlobalAutoApproveOptIn, StorageScope.APPLICATION);
 				}
+				this._updateGlobalAutoApproveContextKey();
 			}
 		}));
 
-		this._ctxToolsCount = ChatContextKeys.Tools.toolsCount.bindTo(_contextKeyService);
+		// Update context key when storage changes (for user override)
+		this._register(this._storageService.onDidChangeValue(StorageScope.APPLICATION, AutoApproveStorageKeys.GlobalAutoApproveUserOverride, this._store)(() => {
+			this._updateGlobalAutoApproveContextKey();
+		}));
 
 		// Create the internal VS Code tool set
 		this.vscodeToolSet = this._register(this.createToolSet(
@@ -937,7 +946,7 @@ export class LanguageModelToolsService extends Disposable implements ILanguageMo
 	}
 
 	private playAccessibilitySignal(toolInvocations: ChatToolInvocation[]): void {
-		const autoApproved = this._configurationService.getValue(ChatConfiguration.GlobalAutoApprove);
+		const autoApproved = this._isGlobalAutoApproveActive();
 		if (autoApproved) {
 			return;
 		}
@@ -1067,15 +1076,31 @@ export class LanguageModelToolsService extends Disposable implements ILanguageMo
 			}
 		}
 
+		// Check storage-based user override (used when policy blocks the config setting)
+		if (this._storageService.getBoolean(AutoApproveStorageKeys.GlobalAutoApproveUserOverride, StorageScope.APPLICATION, false)) {
+			if (await this._checkGlobalAutoApprove()) {
+				return { type: ToolConfirmKind.Setting, id: ChatConfiguration.GlobalAutoApprove };
+			}
+		}
+
 		return undefined;
 	}
 
 	private async shouldAutoConfirmPostExecution(toolId: string, runsInWorkspace: boolean | undefined, source: ToolDataSource, parameters: unknown, chatSessionResource: URI | undefined): Promise<ConfirmedReason | undefined> {
-		if (this._configurationService.getValue<boolean>(ChatConfiguration.GlobalAutoApprove) && await this._checkGlobalAutoApprove()) {
+		if (this._isGlobalAutoApproveActive() && await this._checkGlobalAutoApprove()) {
 			return { type: ToolConfirmKind.Setting, id: ChatConfiguration.GlobalAutoApprove };
 		}
 
 		return this._confirmationService.getPostConfirmAction({ toolId, source, parameters, chatSessionResource });
+	}
+
+	private _isGlobalAutoApproveActive(): boolean {
+		return this._configurationService.getValue<boolean>(ChatConfiguration.GlobalAutoApprove) === true
+			|| this._storageService.getBoolean(AutoApproveStorageKeys.GlobalAutoApproveUserOverride, StorageScope.APPLICATION, false);
+	}
+
+	private _updateGlobalAutoApproveContextKey(): void {
+		this._ctxGlobalAutoApproveActive.set(this._isGlobalAutoApproveActive());
 	}
 
 	private async _checkGlobalAutoApprove(): Promise<boolean> {
@@ -1111,7 +1136,12 @@ export class LanguageModelToolsService extends Disposable implements ILanguageMo
 		});
 
 		if (promptResult.result !== true) {
-			await this._configurationService.updateValue(ChatConfiguration.GlobalAutoApprove, false);
+			// Disable — clear the storage override and config (if not policy-locked)
+			this._storageService.remove(AutoApproveStorageKeys.GlobalAutoApproveUserOverride, StorageScope.APPLICATION);
+			if (this._configurationService.inspect(ChatConfiguration.GlobalAutoApprove).policyValue === undefined) {
+				await this._configurationService.updateValue(ChatConfiguration.GlobalAutoApprove, false);
+			}
+			this._updateGlobalAutoApproveContextKey();
 			return false;
 		}
 

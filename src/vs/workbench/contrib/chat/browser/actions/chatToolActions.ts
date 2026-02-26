@@ -5,22 +5,28 @@
 
 import { CancellationTokenSource } from '../../../../../base/common/cancellation.js';
 import { Codicon } from '../../../../../base/common/codicons.js';
+import { MarkdownString } from '../../../../../base/common/htmlContent.js';
 import { Iterable } from '../../../../../base/common/iterator.js';
 import { KeyCode, KeyMod } from '../../../../../base/common/keyCodes.js';
 import { autorun } from '../../../../../base/common/observable.js';
+import Severity from '../../../../../base/common/severity.js';
 import { URI } from '../../../../../base/common/uri.js';
 import { ServicesAccessor } from '../../../../../editor/browser/editorExtensions.js';
 import { localize, localize2 } from '../../../../../nls.js';
 import { Action2, MenuId, registerAction2 } from '../../../../../platform/actions/common/actions.js';
+import { IConfigurationService } from '../../../../../platform/configuration/common/configuration.js';
 import { ContextKeyExpr } from '../../../../../platform/contextkey/common/contextkey.js';
+import { IDialogService } from '../../../../../platform/dialogs/common/dialogs.js';
 import { IInstantiationService } from '../../../../../platform/instantiation/common/instantiation.js';
 import { KeybindingWeight } from '../../../../../platform/keybinding/common/keybindingsRegistry.js';
+import { IStorageService, StorageScope, StorageTarget } from '../../../../../platform/storage/common/storage.js';
 import { ITelemetryService } from '../../../../../platform/telemetry/common/telemetry.js';
 import { ChatContextKeys } from '../../common/actions/chatContextKeys.js';
 import { ConfirmedReason, IChatToolInvocation, ToolConfirmKind } from '../../common/chatService/chatService.js';
 import { isResponseVM } from '../../common/model/chatViewModel.js';
 import { ChatConfiguration, ChatModeKind } from '../../common/constants.js';
 import { IChatWidget, IChatWidgetService } from '../chat.js';
+import { globalAutoApproveDescription } from '../tools/languageModelToolsService.js';
 import { ToolsScope } from '../widget/input/chatSelectedTools.js';
 import { CHAT_CATEGORY } from './chatActions.js';
 import { showToolsPicker } from './chatToolPicker.js';
@@ -235,8 +241,102 @@ export class ConfigureToolsAction extends Action2 {
 	}
 }
 
+const AutoApproveOptInStorageKey = 'chat.tools.global.autoApprove.optIn';
+const AutoApproveUserOverrideStorageKey = 'chat.tools.global.autoApprove.userOverride';
+
+export class ToggleAutoApproveAction extends Action2 {
+	public static readonly ID = 'workbench.action.chat.toggleAutoApprove';
+
+	constructor() {
+		super({
+			id: ToggleAutoApproveAction.ID,
+			title: localize2('chat.toggleAutoApprove', "Toggle Auto Approve"),
+			icon: Codicon.shield,
+			f1: true,
+			category: CHAT_CATEGORY,
+			precondition: ChatContextKeys.chatModeKind.isEqualTo(ChatModeKind.Agent),
+			toggled: {
+				condition: ChatContextKeys.Tools.globalAutoApproveActive,
+				icon: Codicon.zap,
+				tooltip: localize('chat.autoApproveEnabled', "Auto Approve Enabled (YOLO Mode) \u2014 Click to Disable"),
+			},
+			tooltip: localize('chat.autoApproveDisabled', "Auto Approve Disabled \u2014 Click to Enable"),
+			menu: [{
+				when: ContextKeyExpr.and(
+					ChatContextKeys.chatModeKind.isEqualTo(ChatModeKind.Agent),
+					ChatContextKeys.lockedToCodingAgent.negate(),
+				),
+				id: MenuId.ChatInput,
+				group: 'navigation',
+				order: 99,
+			}]
+		});
+	}
+
+	override async run(accessor: ServicesAccessor): Promise<void> {
+		const configurationService = accessor.get(IConfigurationService);
+		const dialogService = accessor.get(IDialogService);
+		const storageService = accessor.get(IStorageService);
+
+		const isActive = configurationService.getValue<boolean>(ChatConfiguration.GlobalAutoApprove)
+			|| storageService.getBoolean(AutoApproveUserOverrideStorageKey, StorageScope.APPLICATION, false);
+
+		const isPolicyLocked = configurationService.inspect(ChatConfiguration.GlobalAutoApprove).policyValue !== undefined;
+
+		if (isActive) {
+			// Disable — clear the storage override and config (if not policy-locked)
+			storageService.remove(AutoApproveUserOverrideStorageKey, StorageScope.APPLICATION);
+			if (!isPolicyLocked) {
+				await configurationService.updateValue(ChatConfiguration.GlobalAutoApprove, false);
+			}
+			return;
+		}
+
+		// Enable — check if user has previously opted in
+		const optedIn = storageService.getBoolean(AutoApproveOptInStorageKey, StorageScope.APPLICATION, false);
+		if (!optedIn) {
+			// Show the opt-in warning dialog
+			const promptResult = await dialogService.prompt({
+				type: Severity.Warning,
+				message: localize('autoApprove.toggle.title', 'Enable global auto approve?'),
+				buttons: [
+					{
+						label: localize('autoApprove.toggle.enable', 'Enable'),
+						run: () => true
+					},
+					{
+						label: localize('autoApprove.toggle.disable', 'Disable'),
+						run: () => false
+					},
+				],
+				custom: {
+					icon: Codicon.warning,
+					disableCloseAction: true,
+					markdownDetails: [{
+						markdown: new MarkdownString(globalAutoApproveDescription.value),
+					}],
+				}
+			});
+
+			if (promptResult.result !== true) {
+				return;
+			}
+
+			storageService.store(AutoApproveOptInStorageKey, true, StorageScope.APPLICATION, StorageTarget.USER);
+		}
+
+		// Write to config if allowed, otherwise use storage-based override
+		if (isPolicyLocked) {
+			storageService.store(AutoApproveUserOverrideStorageKey, true, StorageScope.APPLICATION, StorageTarget.USER);
+		} else {
+			await configurationService.updateValue(ChatConfiguration.GlobalAutoApprove, true);
+		}
+	}
+}
+
 export function registerChatToolActions() {
 	registerAction2(AcceptToolConfirmation);
 	registerAction2(SkipToolConfirmation);
 	registerAction2(ConfigureToolsAction);
+	registerAction2(ToggleAutoApproveAction);
 }
