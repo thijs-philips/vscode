@@ -3412,6 +3412,9 @@ export namespace ChatAgentRequest {
 		}
 
 		const sessionId = LocalChatSessionUri.parseLocalSessionId(request.sessionResource) ?? request.sessionResource.toString();
+		const convertedRefs = variableReferences
+			.map(v => ChatPromptReference.to(v, diagnostics, logService))
+			.filter(isDefined);
 		const requestWithAllProps: vscode.ChatRequest = {
 			id: request.requestId,
 			prompt: request.message,
@@ -3421,9 +3424,7 @@ export namespace ChatAgentRequest {
 			isParticipantDetected: request.isParticipantDetected ?? false,
 			sessionId,
 			sessionResource: request.sessionResource,
-			references: variableReferences
-				.map(v => ChatPromptReference.to(v, diagnostics, logService))
-				.filter(isDefined),
+			references: convertedRefs,
 			toolReferences: toolReferences.map(ChatLanguageModelToolReference.to),
 			location: ChatLocation.to(request.location),
 			acceptedConfirmationData: request.acceptedConfirmationData,
@@ -3526,7 +3527,9 @@ export namespace ChatPromptReference {
 			const ref = variable.references?.[0]?.reference;
 			value = new types.ChatReferenceBinaryData(
 				variable.mimeType ?? 'image/png',
-				() => Promise.resolve(new Uint8Array(Object.values(variable.value as number[]))),
+				() => {
+					return Promise.resolve(new Uint8Array(Object.values(variable.value as number[])));
+				},
 				ref && URI.isUri(ref) ? ref : undefined
 			);
 		} else if (variable.kind === 'diagnostic') {
