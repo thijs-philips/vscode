@@ -1609,7 +1609,7 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 		this.auxiliaryBarPartView = auxiliaryBarPart;
 		this.statusBarPartView = statusBar;
 
-		const viewMap = {
+		const viewMap: Record<string, ISerializableView> = {
 			[Parts.ACTIVITYBAR_PART]: this.activityBarPartView,
 			[Parts.TOOLBARSTRIP_PART]: this.toolbarStripPartView,
 			[Parts.BANNER_PART]: this.bannerPartView,

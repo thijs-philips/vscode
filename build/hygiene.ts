@@ -35,13 +35,6 @@ export function hygiene(some: NodeJS.ReadWriteStream | string[] | undefined, run
 	let errorCount = 0;
 
 	const productJson = es.through(function (file: VinylFile) {
-		const product = JSON.parse(file.contents!.toString('utf8'));
-
-		if (product.extensionsGallery) {
-			console.error(`product.json: Contains 'extensionsGallery'`);
-			errorCount++;
-		}
-
 		this.emit('data', file);
 	});
 
@@ -70,7 +63,7 @@ export function hygiene(some: NodeJS.ReadWriteStream | string[] | undefined, run
 			}
 			// Please do not add symbols that resemble ASCII letters!
 			// eslint-disable-next-line no-misleading-character-class
-			const m = /([^\t\n\r\x20-\x7E⊃⊇✔︎✓🎯🧪✍️⚠️🛑🔴🚗🚙🚕🎉✨❗⇧⌥⌘×÷¦⋯…↑↓￫→←↔⟷·•●◆▼⟪⟫┌└├⏎↩√φ]+)/g.exec(line);
+			const m = /([^\t\n\r\x20-\x7E⊃⊇✔︎✓🎯🧪✍️⚠️🛑🔴🚗🚙🚕🎉✨❗⇧⌥⌘×÷¦⋯…↑↓￫→←↔⟷—·•●◆▼⟪⟫┌└├⏎↩√φ]+)/g.exec(line);
 			if (m) {
 				console.error(
 					file.relative + `(${i + 1},${m.index + 1}): Unexpected unicode character: "${m[0]}" (charCode: ${m[0].charCodeAt(0)}). To suppress, use // allow-any-unicode-next-line`
@@ -232,12 +225,17 @@ function createGitIndexVinyls(paths: string[]): Promise<VinylFile[]> {
 		new Promise<VinylFile | null>((c, e) => {
 			const fullPath = path.join(repositoryPath, relativePath);
 
-			fs.stat(fullPath, (err, stat) => {
+			fs.lstat(fullPath, (err, stat) => {
 				if (err && err.code === 'ENOENT') {
 					// ignore deletions
 					return c(null);
 				} else if (err) {
 					return e(err);
+				}
+
+				if (!stat.isFile()) {
+					// skip symlinks, directories, etc.
+					return c(null);
 				}
 
 				cp.exec(

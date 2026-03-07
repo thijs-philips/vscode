@@ -4,14 +4,14 @@
  *--------------------------------------------------------------------------------------------*/
 
 import './media/modalEditorPart.css';
-import { $, addDisposableListener, append, EventHelper, EventType, hide, isHTMLElement, show } from '../../../../base/browser/dom.js';
+import { $, addDisposableListener, append, EventHelper, EventType, hide, isHTMLElement, setVisibility, show } from '../../../../base/browser/dom.js';
 import { StandardKeyboardEvent } from '../../../../base/browser/keyboardEvent.js';
+import { prepareActions } from '../../../../base/browser/ui/actionbar/actionbar.js';
 import { Button } from '../../../../base/browser/ui/button/button.js';
-import { KeyCode } from '../../../../base/common/keyCodes.js';
 import { Emitter, Event } from '../../../../base/common/event.js';
 import { DisposableStore, MutableDisposable, toDisposable } from '../../../../base/common/lifecycle.js';
 import { MenuId } from '../../../../platform/actions/common/actions.js';
-import { HiddenItemStrategy, MenuWorkbenchToolBar } from '../../../../platform/actions/browser/toolbar.js';
+import { HiddenItemStrategy, MenuWorkbenchToolBar, WorkbenchToolBar } from '../../../../platform/actions/browser/toolbar.js';
 import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
 import { IContextKeyService } from '../../../../platform/contextkey/common/contextkey.js';
 import { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';
@@ -25,24 +25,69 @@ import { EditorPart } from './editorPart.js';
 import { GroupDirection, GroupsOrder, IModalEditorPart, GroupActivationReason } from '../../../services/editor/common/editorGroupsService.js';
 import { IEditorService } from '../../../services/editor/common/editorService.js';
 import { EditorPartModalContext, EditorPartModalMaximizedContext, EditorPartModalNavigationContext } from '../../../common/contextkeys.js';
-import { Verbosity } from '../../../common/editor.js';
+import { EditorResourceAccessor, SideBySideEditor, Verbosity } from '../../../common/editor.js';
+import { ResourceLabel } from '../../labels.js';
 import { IHostService } from '../../../services/host/browser/host.js';
 import { IWorkbenchLayoutService, Parts } from '../../../services/layout/browser/layoutService.js';
 import { mainWindow } from '../../../../base/browser/window.js';
 import { localize } from '../../../../nls.js';
 import { Codicon } from '../../../../base/common/codicons.js';
-import { CLOSE_MODAL_EDITOR_COMMAND_ID, MOVE_MODAL_EDITOR_TO_MAIN_COMMAND_ID, NAVIGATE_MODAL_EDITOR_NEXT_COMMAND_ID, NAVIGATE_MODAL_EDITOR_PREVIOUS_COMMAND_ID, TOGGLE_MODAL_EDITOR_MAXIMIZED_COMMAND_ID } from './editorCommands.js';
+import { CLOSE_MODAL_EDITOR_COMMAND_ID, MOVE_MODAL_EDITOR_TO_MAIN_COMMAND_ID, MOVE_MODAL_EDITOR_TO_WINDOW_COMMAND_ID, NAVIGATE_MODAL_EDITOR_NEXT_COMMAND_ID, NAVIGATE_MODAL_EDITOR_PREVIOUS_COMMAND_ID, TOGGLE_MODAL_EDITOR_MAXIMIZED_COMMAND_ID } from './editorCommands.js';
 import { IModalEditorNavigation, IModalEditorPartOptions } from '../../../../platform/editor/common/editor.js';
 
 const defaultModalEditorAllowableCommands = new Set([
+
+	// Application
 	'workbench.action.quit',
 	'workbench.action.reloadWindow',
-	'workbench.action.closeActiveEditor',
-	'workbench.action.closeAllEditors',
+	'workbench.action.toggleFullScreen',
+
+	// Quick access
+	'workbench.action.gotoSymbol',
+	'workbench.action.gotoLine',
+
+	// Zoom
+	'workbench.action.zoomIn',
+	'workbench.action.zoomOut',
+	'workbench.action.zoomReset',
+
+	// File operations
 	'workbench.action.files.save',
 	'workbench.action.files.saveAll',
+	'workbench.action.files.revert',
+
+	// Close editors
+	'workbench.action.closeActiveEditor',
+	'workbench.action.closeAllEditors',
+	'workbench.action.closeEditorsInGroup',
+	'workbench.action.closeUnmodifiedEditors',
+
+	// Settings
+	'workbench.action.openSettings',
+	'workbench.action.openSettings2',
+	'workbench.action.openSettingsJson',
+	'workbench.action.openGlobalSettings',
+	'workbench.action.openApplicationSettingsJson',
+	'workbench.action.openRawDefaultSettings',
+	'workbench.action.openWorkspaceSettings',
+	'workbench.action.openWorkspaceSettingsFile',
+	'workbench.action.openFolderSettings',
+	'workbench.action.openFolderSettingsFile',
+	'workbench.action.openRemoteSettings',
+	'workbench.action.openRemoteSettingsFile',
+	'workbench.action.openAccessibilitySettings',
+	'workbench.action.configureLanguageBasedSettings',
+
+	// Keybindings
+	'workbench.action.openGlobalKeybindings',
+	'workbench.action.openDefaultKeybindingsFile',
+	'workbench.action.openGlobalKeybindingsFile',
+	'workbench.action.openKeyboardLayoutPicker',
+
+	// Modal editor
 	CLOSE_MODAL_EDITOR_COMMAND_ID,
 	MOVE_MODAL_EDITOR_TO_MAIN_COMMAND_ID,
+	MOVE_MODAL_EDITOR_TO_WINDOW_COMMAND_ID,
 	TOGGLE_MODAL_EDITOR_MAXIMIZED_COMMAND_ID,
 	NAVIGATE_MODAL_EDITOR_PREVIOUS_COMMAND_ID,
 	NAVIGATE_MODAL_EDITOR_NEXT_COMMAND_ID,
@@ -63,6 +108,7 @@ export class ModalEditorPart {
 		@IWorkbenchLayoutService private readonly layoutService: IWorkbenchLayoutService,
 		@IKeybindingService private readonly keybindingService: IKeybindingService,
 		@IHostService private readonly hostService: IHostService,
+		@IConfigurationService private readonly configurationService: IConfigurationService,
 	) {
 	}
 
@@ -78,23 +124,23 @@ export class ModalEditorPart {
 			if (e.target === modalElement) {
 				EventHelper.stop(e, true);
 
-				// Guide focus back into the modal when clicking outside modal
-				editorPartContainer.focus();
+				// Close modal when clicking outside the dialog
+				editorPart.close();
+			}
+		}));
+
+		let useModalMode = this.configurationService.getValue<string>('workbench.editor.useModal');
+		disposables.add(this.configurationService.onDidChangeConfiguration(e => {
+			if (e.affectsConfiguration('workbench.editor.useModal')) {
+				useModalMode = this.configurationService.getValue<string>('workbench.editor.useModal');
 			}
 		}));
 
 		disposables.add(addDisposableListener(modalElement, EventType.KEY_DOWN, e => {
 			const event = new StandardKeyboardEvent(e);
 
-			// Close on Escape
-			if (event.equals(KeyCode.Escape)) {
-				EventHelper.stop(event, true);
-
-				editorPart.close();
-			}
-
-			// Prevent unsupported commands
-			else {
+			// Prevent unsupported commands unless all editors open in modal
+			if (useModalMode !== 'all') {
 				const resolved = this.keybindingService.softDispatch(event, this.layoutService.mainContainer);
 				if (resolved.kind === ResultKind.KbFound && resolved.commandId) {
 					if (
@@ -115,7 +161,6 @@ export class ModalEditorPart {
 			role: 'dialog',
 			'aria-modal': 'true',
 			'aria-labelledby': titleId,
-			tabIndex: -1
 		});
 		shadowElement.appendChild(editorPartContainer);
 
@@ -123,7 +168,7 @@ export class ModalEditorPart {
 		const headerElement = editorPartContainer.appendChild($('.modal-editor-header'));
 
 		// Title element
-		const titleElement = append(headerElement, $('div.modal-editor-title'));
+		const titleElement = append(headerElement, $('div.modal-editor-title.show-file-icons'));
 		titleElement.id = titleId;
 		titleElement.textContent = '';
 
@@ -187,22 +232,58 @@ export class ModalEditorPart {
 			[IEditorService, modalEditorService]
 		)));
 
-		// Create toolbar
+		// Create editor toolbar
+		const editorActionsToolbarContainer = append(actionBarContainer, $('div.modal-editor-editor-actions'));
+		const editorActionsToolbar = disposables.add(scopedInstantiationService.createInstance(WorkbenchToolBar, editorActionsToolbarContainer, {
+			hiddenItemStrategy: HiddenItemStrategy.NoHide,
+			highlightToggledItems: true,
+		}));
+
+		const editorActionsSeparator = append(actionBarContainer, $('div.modal-editor-action-separator'));
+		const editorActionsDisposables = disposables.add(new DisposableStore());
+		const updateEditorActions = () => {
+			editorActionsDisposables.clear();
+
+			const editorActions = editorPart.activeGroup.createEditorActions(editorActionsDisposables, MenuId.ModalEditorEditorTitle);
+			editorActionsDisposables.add(editorActions.onDidChange(() => updateEditorActions()));
+
+			const { primary, secondary } = editorActions.actions;
+			editorActionsToolbar.setActions(prepareActions(primary), prepareActions(secondary));
+
+			const hasActions = primary.length > 0 || secondary.length > 0;
+			setVisibility(hasActions, editorActionsSeparator);
+		};
+		disposables.add(Event.runAndSubscribe(modalEditorService.onDidActiveEditorChange, () => updateEditorActions()));
+
+		// Create global toolbar
 		disposables.add(scopedInstantiationService.createInstance(MenuWorkbenchToolBar, actionBarContainer, MenuId.ModalEditorTitle, {
 			hiddenItemStrategy: HiddenItemStrategy.NoHide,
 			highlightToggledItems: true,
 			menuOptions: { shouldForwardArgs: true }
 		}));
 
-		disposables.add(Event.runAndSubscribe(modalEditorService.onDidActiveEditorChange, (() => {
-
-			// Update title when active editor changes
+		// Create label
+		const label = disposables.add(scopedInstantiationService.createInstance(ResourceLabel, titleElement, {}));
+		disposables.add(Event.runAndSubscribe(modalEditorService.onDidActiveEditorChange, () => {
 			const activeEditor = editorPart.activeGroup.activeEditor;
-			titleElement.textContent = activeEditor?.getTitle(Verbosity.MEDIUM) ?? '';
+			if (activeEditor) {
+				const { labelFormat } = editorPart.partOptions;
 
-			// Notify editor part that active editor changed
-			editorPart.notifyActiveEditorChanged();
-		})));
+				label.element.setResource(
+					{
+						resource: EditorResourceAccessor.getOriginalUri(activeEditor, { supportSideBySide: SideBySideEditor.BOTH }),
+						name: activeEditor.getName(),
+						description: activeEditor.getDescription(labelFormat === 'short' ? Verbosity.SHORT : labelFormat === 'long' ? Verbosity.LONG : Verbosity.MEDIUM) || ''
+					},
+					{
+						icon: activeEditor.getIcon(),
+						extraClasses: activeEditor.getLabelExtraClasses(),
+					}
+				);
+			} else {
+				label.element.clear();
+			}
+		}));
 
 		// Handle double-click on header to toggle maximize
 		disposables.add(addDisposableListener(headerElement, EventType.DBLCLICK, e => {
@@ -211,6 +292,12 @@ export class ModalEditorPart {
 			editorPart.toggleMaximized();
 		}));
 
+		// Focus active editor when clicking into the title area with no other click target
+		disposables.add(addDisposableListener(headerElement, EventType.CLICK, e => {
+			EventHelper.stop(e);
+
+			editorPart.activeGroup.focus();
+		}));
 
 		// Layout the modal editor part
 		const layoutModal = () => {
@@ -227,8 +314,8 @@ export class ModalEditorPart {
 				width = Math.max(containerDimension.width - horizontalPadding, 0);
 				height = Math.max(availableHeight - verticalPadding, 0);
 			} else {
-				const maxWidth = 1200;
-				const maxHeight = 800;
+				const maxWidth = 1400;
+				const maxHeight = 900;
 				const targetWidth = containerDimension.width * 0.8;
 				const targetHeight = availableHeight * 0.8;
 				width = Math.min(targetWidth, maxWidth, containerDimension.width);
@@ -251,8 +338,8 @@ export class ModalEditorPart {
 		this.hostService.setWindowDimmed(mainWindow, true);
 		disposables.add(toDisposable(() => this.hostService.setWindowDimmed(mainWindow, false)));
 
-		// Focus the modal
-		editorPartContainer.focus();
+		// Focus
+		editorPart.activeGroup.focus();
 
 		return {
 			part: editorPart,
@@ -275,7 +362,7 @@ class ModalEditorPartImpl extends EditorPart implements IModalEditorPart {
 	private readonly _onDidChangeNavigation = this._register(new Emitter<IModalEditorNavigation | undefined>());
 	readonly onDidChangeNavigation = this._onDidChangeNavigation.event;
 
-	private _maximized = false;
+	private _maximized: boolean;
 	get maximized(): boolean { return this._maximized; }
 
 	private _navigation: IModalEditorNavigation | undefined;
@@ -301,6 +388,7 @@ class ModalEditorPartImpl extends EditorPart implements IModalEditorPart {
 		const id = ModalEditorPartImpl.COUNTER++;
 		super(editorPartsView, `workbench.parts.modalEditor.${id}`, localize('modalEditorPart', "Modal Editor Area"), windowId, instantiationService, themeService, configurationService, storageService, layoutService, hostService, contextKeyService);
 
+		this._maximized = options?.maximized ?? false;
 		this._navigation = options?.navigation;
 
 		this.enforceModalPartOptions();
@@ -313,24 +401,23 @@ class ModalEditorPartImpl extends EditorPart implements IModalEditorPart {
 	}
 
 	private enforceModalPartOptions(): void {
-		const editorCount = this.groups.reduce((count, group) => count + group.count, 0);
 		this.optionsDisposable.value = this.enforcePartOptions({
-			showTabs: editorCount > 1 ? 'multiple' : 'none',
+			showTabs: 'none',
 			enablePreview: true,
 			closeEmptyGroups: true,
-			tabActionCloseVisibility: editorCount > 1,
-			editorActionsLocation: 'default',
+			tabActionCloseVisibility: false,
+			editorActionsLocation: 'hidden',
 			tabHeight: 'default',
 			wrapTabs: false,
 			allowDropIntoGroup: false
 		});
 	}
 
-	notifyActiveEditorChanged(): void {
-		this.enforceModalPartOptions();
-	}
-
 	updateOptions(options?: IModalEditorPartOptions): void {
+		if (typeof options?.maximized === 'boolean' && options.maximized !== this._maximized) {
+			this.toggleMaximized();
+		}
+
 		this._navigation = options?.navigation;
 
 		this._onDidChangeNavigation.fire(options?.navigation);
