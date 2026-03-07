@@ -10,114 +10,44 @@ import * as vscode from 'vscode';
 // ---------------------------------------------------------------------------
 
 interface ProjectType {
-	/** Display label shown in the Build menu */
+	/** Display label shown in the Run menu (e.g. "Run Python") */
 	readonly label: string;
 	/** Glob patterns whose presence in the workspace signals this project type */
 	readonly markerGlobs: string[];
-	/** Build/run/test/clean commands for this project type */
-	readonly commands: {
-		build?: string;
-		test?: string;
-		run?: string;
-		clean?: string;
-		install?: string;
-	};
+	/** Shell command executed when the menu item is selected */
+	readonly runCommand: string;
 }
 
 const PROJECT_TYPES: ProjectType[] = [
 	{
-		label: 'npm',
-		markerGlobs: ['package.json'],
-		commands: {
-			build: 'npm run build',
-			test: 'npm test',
-			run: 'npm start',
-			install: 'npm install',
-		},
+		label: 'Python',
+		markerGlobs: ['pyproject.toml', 'setup.py', 'requirements.txt', '**/*.py'],
+		runCommand: 'python main.py',
 	},
 	{
 		label: '.NET',
 		markerGlobs: ['**/*.csproj', '**/*.sln'],
-		commands: {
-			build: 'dotnet build',
-			test: 'dotnet test',
-			run: 'dotnet run',
-			clean: 'dotnet clean',
-			install: 'dotnet restore',
-		},
+		runCommand: 'dotnet run',
 	},
 	{
-		label: 'Python',
-		markerGlobs: ['pyproject.toml', 'setup.py', 'requirements.txt'],
-		commands: {
-			build: 'python -m build',
-			test: 'pytest',
-			run: 'python main.py',
-			install: 'pip install -r requirements.txt',
-		},
-	},
-	{
-		label: 'Rust',
-		markerGlobs: ['Cargo.toml'],
-		commands: {
-			build: 'cargo build',
-			test: 'cargo test',
-			run: 'cargo run',
-			clean: 'cargo clean',
-		},
-	},
-	{
-		label: 'Go',
-		markerGlobs: ['go.mod'],
-		commands: {
-			build: 'go build ./...',
-			test: 'go test ./...',
-			run: 'go run .',
-			clean: 'go clean',
-		},
-	},
-	{
-		label: 'Maven',
-		markerGlobs: ['pom.xml'],
-		commands: {
-			build: 'mvn compile',
-			test: 'mvn test',
-			run: 'mvn exec:java',
-			clean: 'mvn clean',
-			install: 'mvn install',
-		},
-	},
-	{
-		label: 'Gradle',
-		markerGlobs: ['build.gradle', 'build.gradle.kts'],
-		commands: {
-			build: 'gradle build',
-			test: 'gradle test',
-			run: 'gradle run',
-			clean: 'gradle clean',
-		},
-	},
-	{
-		label: 'Make',
-		markerGlobs: ['Makefile', 'makefile', 'GNUmakefile'],
-		commands: {
-			build: 'make',
-			test: 'make test',
-			clean: 'make clean',
-			install: 'make install',
-		},
-	},
-	{
-		label: 'CMake',
-		markerGlobs: ['CMakeLists.txt'],
-		commands: {
-			build: 'cmake --build build',
-			test: 'ctest --test-dir build',
-			clean: 'cmake --build build --target clean',
-			install: 'cmake --install build',
-		},
+		label: 'JavaScript/TypeScript',
+		markerGlobs: ['package.json'],
+		runCommand: 'npm start',
 	},
 ];
+
+// ---------------------------------------------------------------------------
+// Well-known menu identifier for the "Run" menu in VS Code's menu bar.
+// Internally this is called "MenubarDebugMenu" but displayed as "Run".
+// ---------------------------------------------------------------------------
+
+const RUN_MENU_ID = 'MenubarDebugMenu';
+
+/**
+ * Group used for our items inside the Run menu. The `z_` prefix places them at
+ * the bottom of the menu, after the built-in debug/run items.
+ */
+const RUN_MENU_GROUP = 'z_projectRun';
 
 // ---------------------------------------------------------------------------
 // State
@@ -133,16 +63,15 @@ let scanning = false;
 
 export function activate(context: vscode.ExtensionContext) {
 
-	// Register the five generic commands
-	context.subscriptions.push(
-		vscode.commands.registerCommand('projectBuild.build', () => pickAndRun('build')),
-		vscode.commands.registerCommand('projectBuild.test', () => pickAndRun('test')),
-		vscode.commands.registerCommand('projectBuild.run', () => pickAndRun('run')),
-		vscode.commands.registerCommand('projectBuild.clean', () => pickAndRun('clean')),
-		vscode.commands.registerCommand('projectBuild.install', () => pickAndRun('install')),
-	);
+	// Register one command per project type
+	for (const pt of PROJECT_TYPES) {
+		const commandId = commandIdFor(pt);
+		context.subscriptions.push(
+			vscode.commands.registerCommand(commandId, () => runProject(pt)),
+		);
+	}
 
-	// Re-scan when workspace folders change or marker files are created/deleted
+	// Re-scan when workspace folders change
 	context.subscriptions.push(
 		vscode.workspace.onDidChangeWorkspaceFolders(() => rescan()),
 	);
@@ -166,6 +95,16 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// Initial scan
 	rescan();
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Derive a stable command ID from the project type label. */
+function commandIdFor(pt: ProjectType): string {
+	const slug = pt.label.toLowerCase().replace(/[^a-z0-9]+/g, '');
+	return `projectBuild.run${slug}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -227,7 +166,7 @@ function arraysEqual(a: ProjectType[], b: ProjectType[]): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Menu construction
+// Menu construction — adds items to the existing "Run" menu
 // ---------------------------------------------------------------------------
 
 function rebuildMenu() {
@@ -237,55 +176,13 @@ function rebuildMenu() {
 		return;
 	}
 
-	// Create top-level "Build" submenu (after Run=6, before Help)
-	const { submenuId: buildMenuId, disposable: buildMenuDisposable } = vscode.menus.addSubmenu('MenubarMainMenu', {
-		title: 'Build',
-		order: 7
-	});
-	menuDisposables.push(buildMenuDisposable);
-
-	if (currentProjectTypes.length === 1) {
-		// Single project type — flat list of commands directly in the Build menu
-		const pt = currentProjectTypes[0];
-		addCommandItems(buildMenuId, pt, '1_actions');
-	} else {
-		// Multiple project types — each gets its own submenu inside Build
-		let groupOrder = 1;
-		for (const pt of currentProjectTypes) {
-			const group = `${groupOrder}_${pt.label.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
-			const { submenuId: ptSubmenuId, disposable: ptDisposable } = vscode.menus.addSubmenu(buildMenuId, {
-				title: pt.label,
-				group,
-				order: groupOrder
-			});
-			menuDisposables.push(ptDisposable);
-			addCommandItems(ptSubmenuId, pt, '1_actions');
-			groupOrder++;
-		}
-	}
-}
-
-function addCommandItems(menuId: string, pt: ProjectType, group: string) {
-	const entries: { key: keyof ProjectType['commands']; label: string; order: number }[] = [
-		{ key: 'build',   label: 'Build',              order: 1 },
-		{ key: 'test',    label: 'Run Tests',          order: 2 },
-		{ key: 'run',     label: 'Run / Start',        order: 3 },
-		{ key: 'clean',   label: 'Clean',              order: 4 },
-		{ key: 'install', label: 'Install Dependencies', order: 5 },
-	];
-
-	for (const entry of entries) {
-		const cmd = pt.commands[entry.key];
-		if (!cmd) {
-			continue;
-		}
-		// Use a unique command id per project-type + action so QuickPick is skipped
-		// when there is only one matching project type
-		menuDisposables.push(vscode.menus.addMenuItem(menuId, {
-			commandId: `projectBuild.${entry.key}`,
-			title: entry.label,
-			group,
-			order: entry.order
+	let order = 1;
+	for (const pt of currentProjectTypes) {
+		menuDisposables.push(vscode.menus.addMenuItem(RUN_MENU_ID, {
+			commandId: commandIdFor(pt),
+			title: `Run ${pt.label}`,
+			group: RUN_MENU_GROUP,
+			order: order++,
 		}));
 	}
 }
@@ -301,42 +198,10 @@ function disposeMenu() {
 // Command execution
 // ---------------------------------------------------------------------------
 
-async function pickAndRun(action: keyof ProjectType['commands']) {
-	const applicable = currentProjectTypes.filter(pt => pt.commands[action]);
-
-	if (applicable.length === 0) {
-		vscode.window.showInformationMessage(`No ${action} command available for the detected project types.`);
-		return;
-	}
-
-	let chosen: ProjectType;
-
-	if (applicable.length === 1) {
-		chosen = applicable[0];
-	} else {
-		// Multiple project types have this action — let the user pick
-		const items = applicable.map(pt => ({
-			label: pt.label,
-			description: pt.commands[action],
-			pt,
-		}));
-		const pick = await vscode.window.showQuickPick(items, {
-			placeHolder: `Choose project type for "${action}"`,
-		});
-		if (!pick) {
-			return;
-		}
-		chosen = pick.pt;
-	}
-
-	const shellCmd = chosen.commands[action];
-	if (!shellCmd) {
-		return;
-	}
-
-	const terminal = vscode.window.createTerminal(`Build: ${chosen.label}`);
+function runProject(pt: ProjectType) {
+	const terminal = vscode.window.createTerminal(`Run: ${pt.label}`);
 	terminal.show();
-	terminal.sendText(shellCmd);
+	terminal.sendText(pt.runCommand);
 }
 
 export function deactivate() { }

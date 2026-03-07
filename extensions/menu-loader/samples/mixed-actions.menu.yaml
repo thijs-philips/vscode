@@ -1,0 +1,63 @@
+# Mixed Actions — sample .menu.yaml
+# Demonstrates all supported action types in a single menu.
+
+name: project-tools
+menu: MenubarMainMenu
+title: Project Tools
+order: 12
+
+items:
+  - group: 1_build
+    items:
+      - title: Run Build
+        shell: "npm run build"
+        order: 1
+      - title: Run Tests
+        shell:
+          cmd: "npm test"
+          cwd: "${workspaceFolder}"
+          name: "Tests"
+        order: 2
+
+  - group: 2_docs
+    items:
+      - title: Open Documentation
+        url: "https://code.visualstudio.com/docs"
+        order: 1
+      - title: Copy File Path
+        clipboard: "${file}"
+        order: 2
+
+  - group: 3_ai
+    items:
+      - title: Explain This File
+        chat: "Explain the purpose and structure of this file"
+        order: 1
+      - title: Write Tests for Selection
+        chat: "Write unit tests for the selected code"
+        when: "editorHasSelection"
+        order: 2
+
+  - group: 4_snippets
+    when: "editorLangId == typescript || editorLangId == javascript"
+    items:
+      - title: Insert Console Log
+        snippet: "console.log('${1:label}:', ${2:value});"
+        order: 1
+      - title: Insert Arrow Function
+        snippet: "const ${1:name} = (${2:params}) => {\n\t$0\n};"
+        order: 2
+
+  - group: 5_nested
+    items:
+      - title: Format Submenu
+        items:
+          - title: To Uppercase
+            command: editor.action.transformToUppercase
+            order: 1
+          - title: To Lowercase
+            command: editor.action.transformToLowercase
+            order: 2
+          - title: To Title Case
+            command: editor.action.transformToTitlecase
+            order: 3

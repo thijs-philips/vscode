@@ -1833,7 +1833,6 @@
 		"termsOfServiceUrl": "https://docs.github.com/site-policy/github-terms/github-terms-of-service",
 		"reportUrl": "https://docs.github.com/communities/maintaining-your-safety-on-github/reporting-abuse-or-spam"
 	},
-	"quality": "stable",
 	"extensionAllowedBadgeProviders": [
 		"api.travis-ci.com",
 		"app.fossa.io",

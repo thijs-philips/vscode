@@ -1,7 +1,7 @@
 {
   "name": "project-build",
-  "displayName": "Project Build Menu",
-  "description": "Adds a top-level Build menu with project-type-specific build commands",
+  "displayName": "Project Run",
+  "description": "Adds project-type-specific Run commands to the Run menu",
   "version": "1.0.0",
   "publisher": "vscode",
   "license": "MIT",
@@ -22,16 +22,14 @@
     "virtualWorkspaces": false,
     "untrustedWorkspaces": {
       "supported": "limited",
-      "description": "Build commands execute shell processes"
+      "description": "Run commands execute shell processes"
     }
   },
   "contributes": {
     "commands": [
-      { "command": "projectBuild.build",   "title": "Build Project" },
-      { "command": "projectBuild.test",    "title": "Run Tests" },
-      { "command": "projectBuild.run",     "title": "Run / Start" },
-      { "command": "projectBuild.clean",   "title": "Clean" },
-      { "command": "projectBuild.install", "title": "Install Dependencies" }
+      { "command": "projectBuild.runpython",                "title": "Run Python" },
+      { "command": "projectBuild.runnet",                   "title": "Run .NET" },
+      { "command": "projectBuild.runjavascripttypescript",   "title": "Run JavaScript/TypeScript" }
     ]
   },
   "scripts": {

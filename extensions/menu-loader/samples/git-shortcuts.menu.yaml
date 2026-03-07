@@ -1,0 +1,50 @@
+# Git Shortcuts — sample .menu.yaml
+# Surfaces common git extension commands in a top-level menu.
+
+name: git-shortcuts
+menu: MenubarMainMenu
+title: Git
+order: 11
+
+items:
+  - group: 1_repo
+    items:
+      - title: Initialize Repository
+        command: git.init
+        order: 1
+      - title: Clone Repository
+        command: git.clone
+        order: 2
+
+  - group: 2_stage
+    items:
+      - title: Stage All Changes
+        command: git.stageAll
+        order: 1
+      - title: Unstage All Changes
+        command: git.unstageAll
+        order: 2
+      - title: Commit Staged
+        command: git.commit
+        order: 3
+
+  - group: 3_sync
+    items:
+      - title: Pull
+        command: git.pull
+        order: 1
+      - title: Push
+        command: git.push
+        order: 2
+      - title: Fetch
+        command: git.fetch
+        order: 3
+
+  - group: 4_branch
+    items:
+      - title: Create Branch
+        command: git.branch
+        order: 1
+      - title: Checkout To...
+        command: git.checkout
+        order: 2

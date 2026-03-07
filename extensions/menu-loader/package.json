@@ -1,0 +1,66 @@
+{
+	"name": "menu-loader",
+	"displayName": "Menu Loader",
+	"description": "Loads .menu.yaml files from global and project folders to build dynamic pulldown menus and toolbar items",
+	"version": "1.0.0",
+	"publisher": "vscode",
+	"license": "MIT",
+	"engines": {
+		"vscode": "^1.100.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"enabledApiProposals": [
+		"menuAccess",
+		"contribGlobalToolbar"
+	],
+	"activationEvents": [
+		"onStartupFinished"
+	],
+	"main": "./dist/extension.js",
+	"capabilities": {
+		"virtualWorkspaces": false,
+		"untrustedWorkspaces": {
+			"supported": false
+		}
+	},
+	"dependencies": {
+		"js-yaml": "^4.1.0"
+	},
+	"devDependencies": {
+		"@types/js-yaml": "^4.0.9"
+	},
+	"contributes": {
+		"commands": [
+			{
+				"command": "menuLoader.reload",
+				"title": "Menu Loader: Reload Menus"
+			},
+			{
+				"command": "menuLoader.listCommands",
+				"title": "Menu Loader: List All Commands"
+			},
+			{
+				"command": "menuLoader.showMenuTree",
+				"title": "Menu Loader: Show Menu Tree"
+			},
+			{
+				"command": "menuLoader.validateMenus",
+				"title": "Menu Loader: Validate Menu Files"
+			},
+			{
+				"command": "menuLoader.listMenuIds",
+				"title": "Menu Loader: List Menu Location IDs"
+			},
+			{
+				"command": "menuLoader.dumpAll",
+				"title": "Menu Loader: Generate Cache for Copilot"
+			},
+			{
+				"command": "menuLoader.checkDuplicates",
+				"title": "Menu Loader: Check for Duplicate Commands"
+			}
+		]
+	}
+}
