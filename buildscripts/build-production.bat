@@ -30,5 +30,10 @@ echo  Use this path in VS Code Switcher:
 echo    D:\Github\VSCode-win32-x64\Code - OSS.exe
 echo ============================================
 
+:: Patch Copilot Chat vision gating (if extension is installed)
+echo.
+echo Running: patch-copilot-vision.js
+call node scripts\patch-copilot-vision.js
+
 popd
 endlocal

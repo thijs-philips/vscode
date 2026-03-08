@@ -1,3 +1,36 @@
+# Code - OSS (Fork)
+
+This is a fork of [microsoft/vscode](https://github.com/microsoft/vscode) with additional features and customizations on top of the open-source Code - OSS base. It tracks upstream regularly and adds the capabilities described below.
+
+## Fork Features
+
+### Microsoft Marketplace Support
+This fork builds with `quality: "stable"`, enabling installation of extensions directly from the Microsoft Visual Studio Marketplace — including GitHub Copilot and Copilot Chat.
+
+### Dynamic Menus and Toolbars
+The **menu-loader** built-in extension scans `.menu.yaml` files to create dynamic pulldown menus and toolbars, configurable per-project without writing extension code. See [extensions/menu-loader](extensions/menu-loader) for details.
+
+### Copilot Chat Enhancements
+- **YOLO / Auto-Approve Mode** — automatically approve tool calls during agentic chat sessions with configurable security warnings.
+- **Image / Vision Support** — paste images directly into Copilot Chat for vision-capable models, enabled via an automated post-build patch (`scripts/patch-copilot-vision.js`).
+
+### Additional Built-in Extensions
+- **markdown-menu** — Markdown-driven menus and quick picks
+- **mermaid-chat-features** — Mermaid diagram rendering in chat responses
+- **text-toolkit** — Text manipulation utilities
+- **project-build** — Project build integration
+- **prompt-basics** — Prompt file language support
+- **toolbar-sample** — Sample global toolbar contributions
+
+### Build Scripts
+Custom build scripts under `buildscripts/` for one-step debug and production builds on Windows, including automated vision patching.
+
+---
+
+*Everything below is from the original VS Code README.*
+
+---
+
 # Visual Studio Code - Open Source ("Code - OSS")
 [![Feature Requests](https://img.shields.io/github/issues/microsoft/vscode/feature-request.svg)](https://github.com/microsoft/vscode/issues?q=is%3Aopen+is%3Aissue+label%3Afeature-request+sort%3Areactions-%2B1-desc)
 [![Bugs](https://img.shields.io/github/issues/microsoft/vscode/bug.svg)](https://github.com/microsoft/vscode/issues?utf8=✓&q=is%3Aissue+is%3Aopen+label%3Abug)

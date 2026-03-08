@@ -9,6 +9,7 @@ const path = require('path');
 const os = require('os');
 
 const extensionRoots = [
+	path.join(os.homedir(), '.vscode-oss', 'extensions'),
 	path.join(os.homedir(), '.vscode-oss-dev', 'extensions'),
 	path.join(os.homedir(), '.vscode', 'extensions'),
 	path.join(os.homedir(), '.vscode-insiders', 'extensions')
@@ -18,9 +19,12 @@ const helperOld = 'isEditorPreviewFeaturesEnabled(){return this.getTokenValue("e
 const helperNew = 'isEditorPreviewFeaturesEnabled(){return!0}';
 const gateOld = '!this.promptEndpoint.supportsVision||!this.authService.copilotToken?.isEditorPreviewFeaturesEnabled()';
 const gateNew = '!1';
+const visionCapOld = 'this.supportsVision=!!e.capabilities.supports.vision';
+const visionCapNew = 'this.supportsVision=!0';
 
 const helperRegex = /isEditorPreviewFeaturesEnabled\(\)\{return[^}]*?\}/g;
 const gateRegex = /!this\.promptEndpoint\.supportsVision\|\|!this\.authService\.copilotToken\?\.isEditorPreviewFeaturesEnabled\(\)/g;
+const visionCapRegex = /this\.supportsVision=!!e\.capabilities\.supports\.vision/g;
 
 function collectExtensionFiles() {
 	const files = [];
@@ -60,6 +64,7 @@ function applyRegexReplace(content) {
 	let next = content;
 	next = next.replace(helperRegex, helperNew);
 	next = next.replace(gateRegex, gateNew);
+	next = next.replace(visionCapRegex, visionCapNew);
 	return next;
 }
 
@@ -70,8 +75,11 @@ function patchFile(file) {
 		helperNew: countOccurrences(content, helperNew),
 		gateOld: countOccurrences(content, gateOld),
 		gateNew: countOccurrences(content, gateNew),
+		visionCapOld: countOccurrences(content, visionCapOld),
+		visionCapNew: countOccurrences(content, visionCapNew),
 		helperRegexMatches: countMatches(content, helperRegex),
-		gateRegexMatches: countMatches(content, gateRegex)
+		gateRegexMatches: countMatches(content, gateRegex),
+		visionCapRegexMatches: countMatches(content, visionCapRegex)
 	};
 
 	const backup = `${file}.bak`;
@@ -85,8 +93,11 @@ function patchFile(file) {
 	if (before.gateOld > 0) {
 		content = content.split(gateOld).join(gateNew);
 	}
+	if (before.visionCapOld > 0) {
+		content = content.split(visionCapOld).join(visionCapNew);
+	}
 
-	if (before.helperOld === 0 && before.gateOld === 0) {
+	if (before.helperOld === 0 && before.gateOld === 0 && before.visionCapOld === 0) {
 		content = applyRegexReplace(content);
 	}
 
@@ -98,8 +109,11 @@ function patchFile(file) {
 		helperNew: countOccurrences(verify, helperNew),
 		gateOld: countOccurrences(verify, gateOld),
 		gateNew: countOccurrences(verify, gateNew),
+		visionCapOld: countOccurrences(verify, visionCapOld),
+		visionCapNew: countOccurrences(verify, visionCapNew),
 		helperRegexMatches: countMatches(verify, helperRegex),
-		gateRegexMatches: countMatches(verify, gateRegex)
+		gateRegexMatches: countMatches(verify, gateRegex),
+		visionCapRegexMatches: countMatches(verify, visionCapRegex)
 	};
 
 	return { file, before, after, backupCreated: fs.existsSync(backup) };
@@ -115,14 +129,14 @@ console.log(`Found ${files.length} Copilot Chat bundle(s).`);
 let patchedAny = false;
 for (const file of files) {
 	const result = patchFile(file);
-	const changed = result.before.helperOld !== result.after.helperOld || result.before.gateOld !== result.after.gateOld;
+	const changed = result.before.helperOld !== result.after.helperOld || result.before.gateOld !== result.after.gateOld || result.before.visionCapOld !== result.after.visionCapOld;
 	if (changed) {
 		patchedAny = true;
 	}
 	console.log('---');
 	console.log(`FILE: ${result.file}`);
-	console.log(`before: helperOld=${result.before.helperOld}, helperNew=${result.before.helperNew}, gateOld=${result.before.gateOld}, gateNew=${result.before.gateNew}, helperRegex=${result.before.helperRegexMatches}, gateRegex=${result.before.gateRegexMatches}`);
-	console.log(`after : helperOld=${result.after.helperOld}, helperNew=${result.after.helperNew}, gateOld=${result.after.gateOld}, gateNew=${result.after.gateNew}, helperRegex=${result.after.helperRegexMatches}, gateRegex=${result.after.gateRegexMatches}`);
+	console.log(`before: helperOld=${result.before.helperOld}, helperNew=${result.before.helperNew}, gateOld=${result.before.gateOld}, gateNew=${result.before.gateNew}, visionCapOld=${result.before.visionCapOld}, visionCapNew=${result.before.visionCapNew}, helperRegex=${result.before.helperRegexMatches}, gateRegex=${result.before.gateRegexMatches}, visionCapRegex=${result.before.visionCapRegexMatches}`);
+	console.log(`after : helperOld=${result.after.helperOld}, helperNew=${result.after.helperNew}, gateOld=${result.after.gateOld}, gateNew=${result.after.gateNew}, visionCapOld=${result.after.visionCapOld}, visionCapNew=${result.after.visionCapNew}, helperRegex=${result.after.helperRegexMatches}, gateRegex=${result.after.gateRegexMatches}, visionCapRegex=${result.after.visionCapRegexMatches}`);
 }
 
 console.log('---');
