@@ -625,6 +625,14 @@ export class CodeApplication extends Disposable {
 		// Signal phase: ready - before opening first window
 		this.lifecycleMainService.phase = LifecycleMainPhase.Ready;
 
+		// Sync recent workspaces and chat sessions from VS Code (one-way, non-fatal)
+		try {
+			const { syncFromVSCode } = await import('./syncFromVSCode.js');
+			await syncFromVSCode(this.environmentMainService.userDataPath, this.logService);
+		} catch (error) {
+			this.logService.warn(`[syncFromVSCode] Sync failed: ${error}`);
+		}
+
 		// Open Windows
 		await appInstantiationService.invokeFunction(accessor => this.openFirstWindow(accessor, initialProtocolUrls));
 
