@@ -1,7 +1,7 @@
 {
 	"quality": "stable",
 	"nameShort": "Code - OSS",
-	"nameLong": "Code - OSS (Updated!)",
+	"nameLong": "Code - OSS (v3 Update Test)",
 	"applicationName": "code-oss",
 	"dataFolderName": ".vscode-oss",
 	"win32MutexName": "vscodeoss",
