@@ -129,6 +129,65 @@ async function githubRequest(urlPath: string, token: string): Promise<string> {
 	});
 }
 
+/**
+ * Downloads a GitHub release asset's raw content by following the redirect
+ * that GitHub returns when using Accept: application/octet-stream.
+ */
+async function githubDownloadAssetText(owner: string, repo: string, assetId: number, token: string): Promise<string> {
+	const https = await import('https');
+	return new Promise((resolve, reject) => {
+		const url = new URL(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/releases/assets/${assetId}`, GITHUB_API);
+		const options = {
+			hostname: url.hostname,
+			path: url.pathname,
+			method: 'GET',
+			headers: {
+				'User-Agent': 'Code-OSS-Update-Server',
+				'Accept': 'application/octet-stream',
+				'Authorization': `token ${token}`,
+			},
+		};
+
+		const req = https.request(options, (proxyRes) => {
+			if (proxyRes.statusCode === 302 || proxyRes.statusCode === 301) {
+				const location = proxyRes.headers.location;
+				if (!location) {
+					return reject(new Error('Missing redirect location'));
+				}
+				// Follow the redirect to the signed S3 URL
+				https.get(location, (downloadRes) => {
+					let body = '';
+					downloadRes.setEncoding('utf8');
+					downloadRes.on('data', (chunk: string) => { body += chunk; });
+					downloadRes.on('end', () => {
+						if (downloadRes.statusCode === 200) {
+							resolve(body);
+						} else {
+							reject(new Error(`Download failed: ${downloadRes.statusCode}`));
+						}
+					});
+				}).on('error', reject);
+				// Consume the redirect response body
+				proxyRes.resume();
+				return;
+			}
+
+			let body = '';
+			proxyRes.setEncoding('utf8');
+			proxyRes.on('data', (chunk: string) => { body += chunk; });
+			proxyRes.on('end', () => {
+				if (proxyRes.statusCode && proxyRes.statusCode >= 200 && proxyRes.statusCode < 300) {
+					resolve(body);
+				} else {
+					reject(new Error(`GitHub asset download ${proxyRes.statusCode}: ${body.substring(0, 200)}`));
+				}
+			});
+		});
+		req.on('error', reject);
+		req.end();
+	});
+}
+
 async function getLatestRelease(owner: string, repo: string, token: string): Promise<IGitHubRelease> {
 	// Check cache
 	if (releaseCache && Date.now() < releaseCache.expiresAt) {
@@ -233,10 +292,7 @@ function handleUpdateCheck(
 			let sha256hash: string | undefined;
 			if (checksumAsset) {
 				try {
-					const checksumBody = await githubRequest(
-						`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/releases/assets/${checksumAsset.id}`,
-						token
-					);
+					const checksumBody = await githubDownloadAssetText(owner, repo, checksumAsset.id, token);
 					// The .sha256 file contains just the hex hash (possibly with filename)
 					sha256hash = checksumBody.trim().split(/\s+/)[0];
 				} catch {
