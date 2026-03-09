@@ -1,10 +1,15 @@
 {
 	"quality": "stable",
 	"nameShort": "Code - OSS",
-	"nameLong": "Code - OSS",
+	"nameLong": "Code - OSS (Updated!)",
 	"applicationName": "code-oss",
 	"dataFolderName": ".vscode-oss",
 	"win32MutexName": "vscodeoss",
+	"updateUrl": "http://127.0.0.1:58241",
+	"releaseRepository": {
+		"owner": "thijs-philips",
+		"repo": "vscode"
+	},
 	"licenseName": "MIT",
 	"licenseUrl": "https://github.com/microsoft/vscode/blob/main/LICENSE.txt",
 	"serverLicenseUrl": "https://github.com/microsoft/vscode/blob/main/LICENSE.txt",
