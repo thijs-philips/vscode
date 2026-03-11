@@ -1,0 +1,94 @@
+# View Menu Enhancements
+# Injects folding and editor display toggles into the built-in View menu.
+# The View menu already has appearance, layout, explorer panels, etc.
+# This adds a Folding submenu and an Editor Display submenu.
+
+name: view-enhancements
+menu: MenubarViewMenu
+
+items:
+
+# ── Folding ──────────────────────────────────────────────────────────
+- group: 8_folding
+  title: Folding
+  items:
+  - title: Toggle Fold at Cursor
+    command: editor.toggleFold
+    order: 1
+  - title: Fold Region
+    command: editor.fold
+    order: 2
+  - title: Unfold Region
+    command: editor.unfold
+    order: 3
+  - title: Fold Recursively
+    command: editor.foldRecursively
+    order: 4
+  - title: Unfold Recursively
+    command: editor.unfoldRecursively
+    order: 5
+  - title: Fold All
+    command: editor.foldAll
+    order: 6
+  - title: Unfold All
+    command: editor.unfoldAll
+    order: 7
+  - title: Fold All Block Comments
+    command: editor.foldAllBlockComments
+    order: 8
+  - title: Fold All Marker Regions
+    command: editor.foldAllMarkerRegions
+    order: 9
+  - title: Unfold All Marker Regions
+    command: editor.unfoldAllMarkerRegions
+    order: 10
+  - title: Fold All Except Selected
+    command: editor.foldAllExcept
+    order: 11
+  - title: Unfold All Except Selected
+    command: editor.unfoldAllExcept
+    order: 12
+  - title: Fold Level 1
+    command: editor.foldLevel1
+    order: 13
+  - title: Fold Level 2
+    command: editor.foldLevel2
+    order: 14
+  - title: Fold Level 3
+    command: editor.foldLevel3
+    order: 15
+  - title: Fold Level 4
+    command: editor.foldLevel4
+    order: 16
+  - title: Fold Level 5
+    command: editor.foldLevel5
+    order: 17
+  - title: Fold Level 6
+    command: editor.foldLevel6
+    order: 18
+  - title: Fold Level 7
+    command: editor.foldLevel7
+    order: 19
+
+# ── Editor Display ───────────────────────────────────────────────────
+- group: 9_display
+  title: Editor Display
+  items:
+  - title: Toggle Word Wrap
+    command: editor.action.toggleWordWrap
+    order: 1
+  - title: Toggle Minimap
+    command: editor.action.toggleMinimap
+    order: 2
+  - title: Toggle Breadcrumbs
+    command: breadcrumbs.toggle
+    order: 3
+  - title: Toggle Sticky Scroll
+    command: editor.action.toggleStickyScroll
+    order: 4
+  - title: Toggle Render Whitespace
+    command: editor.action.toggleRenderWhitespace
+    order: 5
+  - title: Toggle Render Control Characters
+    command: editor.action.toggleRenderControlCharacter
+    order: 6

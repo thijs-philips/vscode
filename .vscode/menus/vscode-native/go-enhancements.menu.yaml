@@ -1,0 +1,77 @@
+# Go Menu Enhancements
+# Injects testing and task shortcuts into the built-in Go menu.
+# The Run menu already covers all debug actions (start, step, breakpoints).
+# This adds testing and build-task groups to Go for easy keyboard-free access.
+#
+# Built-in Go menu groups already present:
+#   1_history_nav, 2_editor_nav, 3_global_nav, 4_symbol_nav,
+#   5_infile_nav, 6_problem_nav, 7_change_nav
+
+name: go-enhancements
+menu: MenubarGoMenu
+
+items:
+
+# ── Testing ──────────────────────────────────────────────────────────
+- group: 8_testing
+  title: Testing
+  items:
+  - title: Run All Tests
+    command: testing.runAll
+    order: 1
+  - title: Run Test at Cursor
+    command: testing.runAtCursor
+    order: 2
+  - title: Run Tests in Current File
+    command: testing.runCurrentFile
+    order: 3
+  - title: Debug Test at Cursor
+    command: testing.debugAtCursor
+    order: 4
+  - title: Debug All Tests
+    command: testing.debugAll
+    order: 5
+  - title: Re-Run Last Run
+    command: testing.reRunLastRun
+    order: 6
+  - title: Re-Run Failed Tests
+    command: testing.reRunFailTests
+    order: 7
+  - title: Run Tests with Coverage
+    command: testing.coverageAll
+    order: 8
+  - title: Cancel Test Run
+    command: testing.cancelRun
+    order: 9
+  - title: Show Test Output
+    command: testing.showMostRecentOutput
+    order: 10
+
+# ── Build & Tasks ────────────────────────────────────────────────────
+- group: 9_tasks
+  title: Build & Tasks
+  items:
+  - title: Run Build Task
+    command: workbench.action.tasks.build
+    order: 1
+  - title: Run Test Task
+    command: workbench.action.tasks.test
+    order: 2
+  - title: Run Task…
+    command: workbench.action.tasks.runTask
+    order: 3
+  - title: Re-Run Last Task
+    command: workbench.action.tasks.reRunTask
+    order: 4
+  - title: Show Running Tasks
+    command: workbench.action.tasks.showTasks
+    order: 5
+  - title: Terminate Task
+    command: workbench.action.tasks.terminate
+    order: 6
+  - title: Configure Default Build Task
+    command: workbench.action.tasks.configureDefaultBuildTask
+    order: 7
+  - title: Configure Tasks
+    command: workbench.action.tasks.configureTaskRunner
+    order: 8

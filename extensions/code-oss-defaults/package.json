@@ -1,0 +1,36 @@
+{
+	"name": "code-oss-defaults",
+	"displayName": "Code OSS Default Settings",
+	"description": "Default configuration overrides for Code OSS builds",
+	"version": "1.0.0",
+	"publisher": "vscode",
+	"license": "MIT",
+	"engines": {
+		"vscode": "*"
+	},
+	"contributes": {
+		"configurationDefaults": {
+			"chat.editing.explainChanges.enabled": true,
+			"chat.tips.enabled": true,
+			"chat.agent.maxRequests": 200,
+			"chat.checkpoints.enabled": false,
+			"editor.wordWrap": "on",
+			"chat.agentSessionProjection.enabled": true,
+			"chat.tools.terminal.autoReplyToPrompts": true,
+			"chat.mcp.gallery.enabled": true,
+			"chat.mcp.assisted.nuget.enabled": true,
+			"chat.includeReferencedInstructions": true,
+			"chat.experimental.useSkillAdherencePrompt": true,
+			"chat.useNestedAgentsMdFiles": true,
+			"inlineChat.enableV2": true,
+			"inlineChat.notebookAgent": true,
+			"github.copilot.chat.backgroundCompaction": true,
+			"github.copilot.chat.claudeAgent.allowDangerouslySkipPermissions": true,
+			"github.copilot.chat.codesearch.enabled": true,
+			"github.copilot.chat.copilotMemory.enabled": true,
+			"github.copilot.chat.anthropic.tools.websearch.enabled": true,
+			"github.copilot.chat.anthropic.tools.websearch.maxUses": 20,
+			"github.copilot.chat.githubMcpServer.enabled": true
+		}
+	}
+}

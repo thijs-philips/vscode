@@ -1,0 +1,134 @@
+# TypeScript Menu
+# Top-level menu bar item, visible only for TypeScript files.
+# Covers: imports, navigation, refactoring, TS server, and AI actions.
+# Commands from: typescript-language-features, references-view, editor core.
+
+name: typescript
+menu: MenubarMainMenu
+title: TypeScript
+when: "editorLangId == typescript || editorLangId == typescriptreact"
+order: 7
+
+items:
+
+# ── Imports ──────────────────────────────────────────────────────────
+- group: 1_imports
+  items:
+  - title: Organize Imports
+    command: editor.action.organizeImports
+    order: 1
+  - title: Sort Imports
+    command: typescript.sortImports
+    order: 2
+  - title: Remove Unused Imports
+    command: typescript.removeUnusedImports
+    order: 3
+
+# ── Navigate ─────────────────────────────────────────────────────────
+- group: 2_navigate
+  items:
+  - title: Go to Definition
+    command: editor.action.revealDefinition
+    order: 1
+  - title: Go to Source Definition
+    command: typescript.goToSourceDefinition
+    order: 2
+  - title: Go to Type Definition
+    command: editor.action.goToTypeDefinition
+    order: 3
+  - title: Go to Implementation
+    command: editor.action.goToImplementation
+    order: 4
+  - title: Go to References
+    command: editor.action.goToReferences
+    order: 5
+  - title: Find All References
+    command: references-view.findReferences
+    order: 6
+  - title: Find All Implementations
+    command: references-view.findImplementations
+    order: 7
+  - title: Show Call Hierarchy
+    command: references-view.showCallHierarchy
+    order: 8
+  - title: Show Type Hierarchy
+    command: references-view.showTypeHierarchy
+    order: 9
+  - title: Go to Symbol in Editor
+    command: workbench.action.gotoSymbol
+    order: 10
+  - title: Find File References
+    command: typescript.findAllFileReferences
+    order: 11
+
+# ── Refactor ─────────────────────────────────────────────────────────
+- group: 3_refactor
+  items:
+  - title: Rename Symbol
+    command: editor.action.rename
+    order: 1
+  - title: Refactor…
+    command: editor.action.refactor
+    order: 2
+  - title: Quick Fix
+    command: editor.action.quickFix
+    order: 3
+  - title: Fix All
+    command: editor.action.fixAll
+    order: 4
+  - title: Source Action…
+    command: editor.action.sourceAction
+    order: 5
+
+# ── Format ───────────────────────────────────────────────────────────
+- group: 4_format
+  items:
+  - title: Format Document
+    command: editor.action.formatDocument
+    order: 1
+  - title: Format Selection
+    command: editor.action.formatSelection
+    when: "editorHasSelection"
+    order: 2
+  - title: Toggle Line Comment
+    command: editor.action.commentLine
+    order: 3
+  - title: Toggle Block Comment
+    command: editor.action.blockComment
+    order: 4
+
+# ── TS Server ────────────────────────────────────────────────────────
+- group: 5_server
+  items:
+  - title: Go to Project Configuration
+    command: typescript.goToProjectConfig
+    order: 1
+  - title: Select TypeScript Version…
+    command: typescript.selectTypeScriptVersion
+    order: 2
+  - title: Reload Project
+    command: typescript.reloadProjects
+    order: 3
+  - title: Restart TS Server
+    command: typescript.restartTsServer
+    order: 4
+
+# ── AI ───────────────────────────────────────────────────────────────
+- group: 9_ai
+  when: "hasExtension(GitHub.copilot-chat)"
+  items:
+  - title: Explain
+    command: github.copilot.chat.explain
+    order: 1
+  - title: Fix
+    command: github.copilot.chat.fix
+    order: 2
+  - title: Generate Tests
+    command: github.copilot.chat.generateTests
+    order: 3
+  - title: Generate Docs
+    command: github.copilot.chat.generateDocs
+    order: 4
+  - title: Code Review
+    command: github.copilot.chat.review
+    order: 5

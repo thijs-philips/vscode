@@ -1,0 +1,148 @@
+---
+name: menu-loader
+description: Guide for creating and editing .menu.yaml files that define dynamic VS Code menus. Covers the YAML schema, action types (command, shell, snippet, url, chat, clipboard), when-clauses, menu location IDs, and developer tools for command discovery and validation. Use when the user wants to add, edit, or debug custom menus defined in YAML.
+---
+
+The **menu-loader** extension scans `.menu.yaml` files from `~/.vscode/menus/` (global) and `.vscode/menus/` (per-workspace) and builds live VS Code menus at runtime. Read the companion reference files before writing YAML:
+
+- **[YAML-FORMAT.md](.github/skills/menu-loader/YAML-FORMAT.md)** — complete schema, every field, every action type
+- **[SAMPLES.md](.github/skills/menu-loader/SAMPLES.md)** — annotated examples covering all patterns
+
+---
+
+## Workflow for Creating a New Menu
+
+### 1. Discover what you need
+
+Before writing YAML, gather context using the built-in developer tools.
+
+#### List available commands
+Run **"Menu Loader: List All Commands"** (`menuLoader.listCommands`) from the Command Palette. This opens a markdown document listing every registered command grouped by source extension, with command IDs and titles. Use this to find the exact command IDs to put in your YAML.
+
+#### List menu location IDs
+Run **"Menu Loader: List Menu Location IDs"** (`menuLoader.listMenuIds`). This shows all known `menu:` values (where your menu will appear) organized by category — Menu Bar, Editor, Explorer, SCM, Terminal, Debug, Notebook, Chat, Views, Global, etc.
+
+#### Inspect existing menus
+Run **"Menu Loader: Show Menu Tree"** (`menuLoader.showMenuTree`). This renders all currently loaded `.menu.yaml` files as a Unicode box-drawing tree, showing the hierarchy, when-conditions, and action types at a glance.
+
+### 2. Write the YAML file
+
+Create a `.menu.yaml` file in `.vscode/menus/` (project-local) or `~/.vscode/menus/` (global). See [YAML-FORMAT.md](.github/skills/menu-loader/YAML-FORMAT.md) for the full schema. Minimal example:
+
+```yaml
+name: my-menu
+menu: MenubarMainMenu
+title: My Menu
+
+items:
+  - group: 1_main
+    items:
+      - title: Do Something
+        command: myExtension.doSomething
+```
+
+### 3. Validate
+
+Run **"Menu Loader: Validate Menu Files"** (`menuLoader.validateMenus`). This checks all loaded `.menu.yaml` files for:
+- Missing required fields (`name`, `menu`)
+- Unknown menu location IDs
+- Command IDs that are not currently registered
+- `hasExtension()` references to extensions that are not installed
+- Leaf items with no `title`
+- Nodes with no action and no children
+
+Fix any issues reported, then reload.
+
+### 4. Reload
+
+Run **"Menu Loader: Reload Menus"** (`menuLoader.reload`) or save the file (the extension watches for changes automatically with a 300ms debounce).
+
+---
+
+## Developer Tool Commands Reference
+
+| Command | ID | Purpose |
+|---|---|---|
+| **List All Commands** | `menuLoader.listCommands` | Dump every registered command to a markdown document, grouped by extension. Use to discover command IDs for the `command:` field. |
+| **Show Menu Tree** | `menuLoader.showMenuTree` | Visualize all loaded `.menu.yaml` files as an indented tree with annotations. Use to review structure before editing. |
+| **Validate Menu Files** | `menuLoader.validateMenus` | Check all `.menu.yaml` files for structural errors, unknown commands, missing extensions. Run after editing. |
+| **List Menu Location IDs** | `menuLoader.listMenuIds` | Show all known menu IDs with descriptions. Use to choose the right `menu:` value. |
+| **Reload Menus** | `menuLoader.reload` | Force re-scan and rebuild all menus from YAML files. |
+
+All tools output to an untitled markdown editor — no files are written to disk.
+
+---
+
+## Key Design Patterns
+
+### When-clauses
+Every level of the tree (`MenuDefinitionYaml`, groups, items) supports a `when` field. The runtime evaluates these against the current editor context. Common patterns:
+
+| Pattern | Meaning |
+|---|---|
+| `editorLangId == markdown` | Active editor is Markdown |
+| `resourceExtname == .ts` | Active file has `.ts` extension |
+| `hasExtension(publisher.name)` | A specific extension is installed |
+| `workspaceContains(**/*.py)` | Workspace has Python files |
+| `isWindows` / `isMac` / `isLinux` | Platform check |
+| `editorHasSelection` | Text is selected in editor |
+| `configValue(editor.wordWrap) == on` | A setting has a specific value |
+
+Combine with `&&`, `||`, `!`: `editorLangId == markdown && hasExtension(yzhang.markdown-all-in-one)`
+
+### Six action types (mutually exclusive per leaf item)
+
+| Field | Runs | Example |
+|---|---|---|
+| `command` | A VS Code command | `command: editor.action.formatDocument` |
+| `shell` | A terminal command | `shell: "npm run build"` |
+| `snippet` | Inserts a snippet | `snippet: "**${TM_SELECTED_TEXT}**"` |
+| `url` | Opens a browser URL | `url: "https://example.com"` |
+| `chat` | Opens Copilot Chat | `chat: "Explain this code"` |
+| `clipboard` | Copies text to clipboard | `clipboard: "${file}"` |
+
+### Variable expansion
+Action values support `${variable}` placeholders resolved at execution time:
+`${workspaceFolder}`, `${workspaceFolderBasename}`, `${file}`, `${fileBasename}`, `${fileDirname}`, `${fileExtname}`, `${selectedText}`, `${lineNumber}`, `${clipboard}`, `${env:NAME}`
+
+### Menu locations (most common)
+- `MenubarMainMenu` — create a **new** top-level dropdown
+- `MenubarFileMenu`, `MenubarEditMenu`, etc. — inject into an **existing** menu
+- `EditorContext` — editor right-click menu
+- `ExplorerContext` — file explorer right-click
+- `window/toolbar` — toolbar strip (proposed API)
+
+Run `menuLoader.listMenuIds` for the full list with descriptions.
+
+### Tree structure
+```
+MenuDefinitionYaml          ← top-level: name, menu, title, when, items
+  └── items[]               ← array of MenuNodeYaml
+        ├── group node      ← has group + items[], creates separator section (depth 0) or submenu (depth > 0)
+        ├── submenu node    ← has title + items[], no action
+        └── leaf node       ← has title + exactly one action field
+```
+
+---
+
+## Common Mistakes
+
+1. **Wrong menu ID** — Use `MenubarMainMenu` (not `MainMenu`, not `menubar`). Run `menuLoader.listMenuIds` to check.
+2. **Multiple actions on one item** — Each leaf must have exactly ONE of: `command`, `shell`, `snippet`, `url`, `chat`, `clipboard`.
+3. **Missing `name` or `menu`** — Both are required at the top level. `name` is the internal identifier; `menu` is where it appears.
+4. **Command not showing up** — The extension owning the command may not have activated. Use `when: "hasExtension(publisher.name)"` to guard conditional items.
+5. **Forgetting `title` on leaf items** — Without `title`, the raw command ID is used as the label.
+6. **YAML indentation** — Use consistent 2-space indentation. Items must be nested under their parent's `items:` key.
+
+---
+
+## Iterating with the Tools
+
+The recommended edit cycle:
+
+1. Run `menuLoader.listCommands` → find command IDs you want
+2. Run `menuLoader.listMenuIds` → pick the right `menu:` target
+3. Write or edit the `.menu.yaml` file
+4. Run `menuLoader.validateMenus` → fix any issues
+5. Run `menuLoader.showMenuTree` → verify the structure looks right
+6. The menu auto-reloads on file save (or run `menuLoader.reload`)

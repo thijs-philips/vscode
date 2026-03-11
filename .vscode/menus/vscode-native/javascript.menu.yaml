@@ -1,0 +1,122 @@
+# JavaScript Menu
+# Top-level menu bar item, visible only for JavaScript files.
+# Covers: imports, navigation, refactoring, project config, and AI actions.
+# Commands from: typescript-language-features (JS support), references-view, editor core.
+
+name: javascript
+menu: MenubarMainMenu
+title: JavaScript
+when: "editorLangId == javascript || editorLangId == javascriptreact"
+order: 7
+
+items:
+
+# ── Imports ──────────────────────────────────────────────────────────
+- group: 1_imports
+  items:
+  - title: Organize Imports
+    command: editor.action.organizeImports
+    order: 1
+  - title: Sort Imports
+    command: javascript.sortImports
+    order: 2
+  - title: Remove Unused Imports
+    command: javascript.removeUnusedImports
+    order: 3
+
+# ── Navigate ─────────────────────────────────────────────────────────
+- group: 2_navigate
+  items:
+  - title: Go to Definition
+    command: editor.action.revealDefinition
+    order: 1
+  - title: Go to Type Definition
+    command: editor.action.goToTypeDefinition
+    order: 2
+  - title: Go to Implementation
+    command: editor.action.goToImplementation
+    order: 3
+  - title: Go to References
+    command: editor.action.goToReferences
+    order: 4
+  - title: Find All References
+    command: references-view.findReferences
+    order: 5
+  - title: Find All Implementations
+    command: references-view.findImplementations
+    order: 6
+  - title: Show Call Hierarchy
+    command: references-view.showCallHierarchy
+    order: 7
+  - title: Show Type Hierarchy
+    command: references-view.showTypeHierarchy
+    order: 8
+  - title: Go to Symbol in Editor
+    command: workbench.action.gotoSymbol
+    order: 9
+
+# ── Refactor ─────────────────────────────────────────────────────────
+- group: 3_refactor
+  items:
+  - title: Rename Symbol
+    command: editor.action.rename
+    order: 1
+  - title: Refactor…
+    command: editor.action.refactor
+    order: 2
+  - title: Quick Fix
+    command: editor.action.quickFix
+    order: 3
+  - title: Fix All
+    command: editor.action.fixAll
+    order: 4
+  - title: Source Action…
+    command: editor.action.sourceAction
+    order: 5
+
+# ── Format ───────────────────────────────────────────────────────────
+- group: 4_format
+  items:
+  - title: Format Document
+    command: editor.action.formatDocument
+    order: 1
+  - title: Format Selection
+    command: editor.action.formatSelection
+    when: "editorHasSelection"
+    order: 2
+  - title: Toggle Line Comment
+    command: editor.action.commentLine
+    order: 3
+  - title: Toggle Block Comment
+    command: editor.action.blockComment
+    order: 4
+
+# ── Project ──────────────────────────────────────────────────────────
+- group: 5_project
+  items:
+  - title: Go to Project Configuration
+    command: javascript.goToProjectConfig
+    order: 1
+  - title: Reload Project
+    command: javascript.reloadProjects
+    order: 2
+
+# ── AI ───────────────────────────────────────────────────────────────
+- group: 9_ai
+  when: "hasExtension(GitHub.copilot-chat)"
+  items:
+  - title: Explain
+    command: github.copilot.chat.explain
+    order: 1
+  - title: Fix
+    command: github.copilot.chat.fix
+    order: 2
+  - title: Generate Tests
+    command: github.copilot.chat.generateTests
+    order: 3
+  - title: Generate Docs
+    command: github.copilot.chat.generateDocs
+    order: 4
+  - title: Code Review
+    command: github.copilot.chat.review
+    order: 5

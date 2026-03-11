@@ -1,19 +1,23 @@
 @echo off
 setlocal
 
-echo === VS Code Extensions Build ===
+echo ============================================
+echo  build-extensions.bat
+echo.
+echo  Compiles only the built-in extensions
+echo  under extensions/. Faster than build.bat
+echo  when you only changed extension code.
+echo ============================================
+echo.
+
 pushd %~dp0\..
 
-echo.
 echo Compiling built-in extensions...
 call npm run gulp compile-extensions
 if errorlevel 1 goto fail
 
 echo.
 echo === Extensions build complete ===
-echo.
-echo TIP: To compile a single extension instead:
-echo   node node_modules\typescript\bin\tsc -p extensions\^<name^>\tsconfig.json
 popd
 endlocal
 exit /b 0

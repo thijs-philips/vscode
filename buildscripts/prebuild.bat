@@ -1,10 +1,21 @@
 @echo off
 setlocal
 
-echo === VS Code Prebuild ===
+echo ============================================
+echo  prebuild.bat
+echo.
+echo  One-time setup before you can build or run:
+echo    1. Installs Node dependencies (npm ci)
+echo    2. Downloads the Electron binary
+echo    3. Rebuilds native Node modules
+echo.
+echo  Run this after cloning, or after changing
+echo  branches that update package-lock.json.
+echo ============================================
+echo.
+
 pushd %~dp0\..
 
-echo.
 echo [1/3] Installing Node dependencies...
 call npm ci
 if errorlevel 1 goto fail
@@ -20,7 +31,7 @@ call node build/npm/postinstall.ts
 if errorlevel 1 goto fail
 
 echo.
-echo === Prebuild complete ===
+echo === Prebuild complete. You can now run build.bat or run.bat. ===
 popd
 endlocal
 exit /b 0

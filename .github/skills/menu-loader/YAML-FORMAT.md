@@ -1,0 +1,248 @@
+# Menu Loader YAML Format Reference
+
+Complete schema for `.menu.yaml` files consumed by the menu-loader extension.
+
+---
+
+## File Location
+
+| Location | Scope |
+|---|---|
+| `~/.vscode/menus/*.menu.yaml` | Global — available in all workspaces |
+| `.vscode/menus/*.menu.yaml` | Project — only in that workspace |
+
+Files must end in `.menu.yaml` or `.menu.yml`.
+
+---
+
+## Top-Level Fields (`MenuDefinitionYaml`)
+
+```yaml
+name: <string>          # REQUIRED — unique internal identifier
+menu: <string>          # REQUIRED — target menu location ID
+title: <string>         # Display label for the submenu entry (omit to inject items directly)
+when: <string>          # When-clause — hides entire menu if false
+group: <string>         # Group string on the top-level submenu entry
+order: <number>         # Sort order within the group
+icon: <string>          # Codicon name (e.g. 'markdown', 'git-merge')
+items: <MenuNodeYaml[]> # REQUIRED — tree of groups and items
+```
+
+### `menu` — Target Location
+
+Where the menu appears. Common values:
+
+| Value | Creates |
+|---|---|
+| `MenubarMainMenu` | New top-level dropdown in the menu bar |
+| `MenubarFileMenu` | Items inside the File menu |
+| `MenubarEditMenu` | Items inside the Edit menu |
+| `EditorContext` | Items in the editor right-click menu |
+| `ExplorerContext` | Items in the file explorer right-click menu |
+| `window/toolbar` | Toolbar strip button (proposed API) |
+
+Run `menuLoader.listMenuIds` for the full list of ~70 locations.
+
+---
+
+## Node Fields (`MenuNodeYaml`)
+
+Each entry in `items:` is a node. Three kinds of nodes exist:
+
+### Group Node
+Has `group` + `items`, no `title`, no action. At depth 0 creates a separator-delimited section. At deeper levels creates a submenu.
+
+```yaml
+- group: 1_format
+  when: "editorLangId == markdown"   # optional
+  items:
+    - title: Bold
+      snippet: "**${TM_SELECTED_TEXT}**"
+```
+
+### Submenu Node
+Has `title` + `items`, no action field.
+
+```yaml
+- title: Transform
+  icon: symbol-operator
+  items:
+    - title: Uppercase
+      command: editor.action.transformToUppercase
+    - title: Lowercase
+      command: editor.action.transformToLowercase
+```
+
+### Leaf Node
+Has `title` + exactly ONE action field. No `items`.
+
+```yaml
+- title: Format Document
+  command: editor.action.formatDocument
+  when: "editorHasSelection == false"
+  icon: layout
+  order: 1
+```
+
+### All Node Fields
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `title` | string | On leaves/submenus | Display label |
+| `group` | string | On group nodes | Group identifier. Sortable prefix: `1_name`, `2_name` |
+| `order` | number | No | Sort order within parent |
+| `when` | string | No | When-clause — hides node if false |
+| `icon` | string | No | Codicon name |
+| `command` | string or object | Leaf only | Execute a VS Code command |
+| `shell` | string or object | Leaf only | Run a terminal command |
+| `snippet` | string | Leaf only | Insert an editor snippet |
+| `url` | string | Leaf only | Open URL in browser |
+| `chat` | string | Leaf only | Open Copilot Chat with prompt |
+| `clipboard` | string | Leaf only | Copy text to clipboard |
+| `items` | MenuNodeYaml[] | On groups/submenus | Nested children |
+
+---
+
+## Action Types (Detail)
+
+### `command`
+
+Execute a registered VS Code command.
+
+```yaml
+# Simple — just the command ID
+command: editor.action.formatDocument
+
+# With arguments
+command:
+  id: workbench.action.openSettings
+  args: ["editor.fontSize"]
+```
+
+Use `menuLoader.listCommands` to discover available command IDs.
+
+### `shell`
+
+Run a command in a VS Code terminal.
+
+```yaml
+# Simple — just the command string
+shell: "npm run build"
+
+# With options
+shell:
+  cmd: "npm test -- --grep '${selectedText}'"
+  cwd: "${workspaceFolder}/packages/core"
+  name: "Unit Tests"
+```
+
+| Sub-field | Description |
+|---|---|
+| `cmd` | The shell command to run |
+| `cwd` | Working directory (supports variables) |
+| `name` | Terminal tab name |
+
+### `snippet`
+
+Insert a snippet into the active editor. Uses VS Code snippet syntax (tab stops, placeholders, variables).
+
+```yaml
+snippet: "**${TM_SELECTED_TEXT}**"
+snippet: "console.log('${1:label}:', ${2:value});"
+snippet: "```${1:language}\n${TM_SELECTED_TEXT}\n```"
+```
+
+### `url`
+
+Open a URL in the default browser. Supports variable expansion.
+
+```yaml
+url: "https://code.visualstudio.com/docs"
+url: "https://github.com/search?q=${selectedText}"
+```
+
+### `chat`
+
+Open Copilot Chat with a pre-filled prompt.
+
+```yaml
+chat: "Explain the purpose of this file"
+chat: "Write unit tests for the selected code: ${selectedText}"
+```
+
+### `clipboard`
+
+Copy text to the system clipboard. Supports variable expansion.
+
+```yaml
+clipboard: "${file}"
+clipboard: "${fileBasename}:${lineNumber}"
+```
+
+---
+
+## When-Clause Syntax
+
+When-clauses are boolean expressions evaluated against the current editor context.
+
+### Supported Conditions
+
+| Condition | Example | Meaning |
+|---|---|---|
+| `editorLangId == <id>` | `editorLangId == typescript` | Active editor language |
+| `resourceExtname == <ext>` | `resourceExtname == .py` | Active file extension |
+| `platform == <name>` | `platform == win32` | OS platform |
+| `isWindows` | `isWindows` | Boolean platform checks |
+| `isMac` | `isMac` | |
+| `isLinux` | `isLinux` | |
+| `hasExtension(<id>)` | `hasExtension(yzhang.markdown-all-in-one)` | Extension is installed |
+| `workspaceContains(<glob>)` | `workspaceContains(**/*.py)` | Workspace has matching files |
+| `configValue(<key>)` | `configValue(editor.wordWrap) == on` | Setting value |
+| `editorHasSelection` | `editorHasSelection` | Text is selected |
+
+### Operators
+
+| Operator | Example |
+|---|---|
+| `==` | `editorLangId == python` |
+| `!=` | `resourceExtname != .md` |
+| `&&` | `editorLangId == markdown && hasExtension(yzhang.markdown-all-in-one)` |
+| `\|\|` | `isWindows \|\| isLinux` |
+| `!` | `!editorHasSelection` |
+
+Parentheses are supported for grouping: `(isWindows || isLinux) && editorLangId == python`
+
+---
+
+## Variable Expansion
+
+Action values (shell, snippet, url, clipboard, chat) support `${variable}` placeholders resolved at execution time.
+
+| Variable | Value |
+|---|---|
+| `${workspaceFolder}` | Absolute path to workspace root |
+| `${workspaceFolderBasename}` | Workspace folder name only |
+| `${file}` | Absolute path to current file |
+| `${fileBasename}` | Current filename with extension |
+| `${fileDirname}` | Directory of current file |
+| `${fileExtname}` | Current file extension (e.g. `.ts`) |
+| `${selectedText}` | Currently selected text in editor |
+| `${lineNumber}` | Current line number (1-based) |
+| `${clipboard}` | Current clipboard contents |
+| `${env:NAME}` | Environment variable value |
+
+---
+
+## Positioning
+
+Items within the same group are sorted by `order`. Groups are sorted alphanumerically by their `group` string. Use numeric prefixes for predictable ordering:
+
+```yaml
+items:
+  - group: 1_format     # appears first
+    items: [...]
+  - group: 2_insert     # appears second
+    items: [...]
+  - group: 9_other      # appears last
+    items: [...]
+```

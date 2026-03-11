@@ -633,6 +633,17 @@ export class CodeApplication extends Disposable {
 			this.logService.warn(`[syncFromVSCode] Sync failed: ${error}`);
 		}
 
+		// Start local update server (translates GitHub Releases → VS Code update protocol)
+		try {
+			const { startLocalUpdateServer } = await import('./localUpdateServer.js');
+			const updateServer = await startLocalUpdateServer(this.productService, this.logService);
+			if (updateServer) {
+				this._register(updateServer);
+			}
+		} catch (error) {
+			this.logService.warn(`[localUpdateServer] Failed to start: ${error}`);
+		}
+
 		// Open Windows
 		await appInstantiationService.invokeFunction(accessor => this.openFirstWindow(accessor, initialProtocolUrls));
 

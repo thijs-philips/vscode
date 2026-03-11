@@ -42,32 +42,43 @@ export function scanMenuFiles(): MenuDefinition[] {
 		if (!fs.existsSync(dir)) {
 			continue;
 		}
-
-		let entries: string[];
-		try {
-			entries = fs.readdirSync(dir);
-		} catch {
-			continue;
-		}
-
-		for (const entry of entries) {
-			if (!entry.endsWith('.menu.yaml') && !entry.endsWith('.menu.yml')) {
-				continue;
-			}
-			const filePath = path.join(dir, entry);
-			try {
-				const content = fs.readFileSync(filePath, 'utf8');
-				const parsed = parseMenuYaml(content, filePath);
-				if (parsed) {
-					definitions.push(parsed);
-				}
-			} catch (err) {
-				vscode.window.showWarningMessage(`Menu Loader: Failed to parse ${entry}: ${err}`);
-			}
-		}
+		collectMenuFiles(dir, definitions);
 	}
 
 	return definitions;
+}
+
+/**
+ * Recursively collect `.menu.yaml` / `.menu.yml` files from a directory
+ * and its subdirectories, parsing each into a {@link MenuDefinition}.
+ */
+function collectMenuFiles(dir: string, out: MenuDefinition[]): void {
+	let entries: fs.Dirent[];
+	try {
+		entries = fs.readdirSync(dir, { withFileTypes: true });
+	} catch {
+		return;
+	}
+
+	for (const entry of entries) {
+		const fullPath = path.join(dir, entry.name);
+		if (entry.isDirectory()) {
+			// Skip hidden directories and the .cache directory
+			if (!entry.name.startsWith('.')) {
+				collectMenuFiles(fullPath, out);
+			}
+		} else if (entry.name.endsWith('.menu.yaml') || entry.name.endsWith('.menu.yml')) {
+			try {
+				const content = fs.readFileSync(fullPath, 'utf8');
+				const parsed = parseMenuYaml(content, fullPath);
+				if (parsed) {
+					out.push(parsed);
+				}
+			} catch (err) {
+				vscode.window.showWarningMessage(`Menu Loader: Failed to parse ${entry.name}: ${err}`);
+			}
+		}
+	}
 }
 
 /**
@@ -155,8 +166,8 @@ export function watchMenuDirectories(onChange: () => void): vscode.Disposable {
 	const disposables: vscode.Disposable[] = [];
 
 	for (const dir of getMenuDirectories()) {
-		// Use VS Code file watcher for workspace directories
-		const pattern = new vscode.RelativePattern(vscode.Uri.file(dir), '*.menu.{yaml,yml}');
+		// Use VS Code file watcher for workspace directories (recursive)
+		const pattern = new vscode.RelativePattern(vscode.Uri.file(dir), '**/*.menu.{yaml,yml}');
 		const watcher = vscode.workspace.createFileSystemWatcher(pattern);
 
 		watcher.onDidCreate(() => onChange());

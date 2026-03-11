@@ -1,0 +1,140 @@
+# Notebook Menu
+# Top-level menu bar item, visible only when a notebook is active.
+# Covers cell operations, execution, and output management.
+# Note: notebooks have their own toolbar; this adds menu-bar access
+# for operations that are easy to miss in the toolbar.
+
+name: notebook
+menu: MenubarMainMenu
+title: Notebook
+when: "notebookEditorFocused"
+order: 7
+
+items:
+
+# ── Run ──────────────────────────────────────────────────────────────
+- group: 1_run
+  items:
+  - title: Run All Cells
+    command: notebook.execute
+    order: 1
+  - title: Run Cell
+    command: notebook.cell.execute
+    order: 2
+  - title: Run Cell and Insert Below
+    command: notebook.cell.executeAndInsertBelow
+    order: 3
+  - title: Run Cell and Select Below
+    command: notebook.cell.executeAndSelectBelow
+    order: 4
+  - title: Run Cells Above
+    command: notebook.cell.executeCellsAbove
+    order: 5
+  - title: Run Cell and Below
+    command: notebook.cell.executeCellAndBelow
+    order: 6
+  - title: Cancel Cell Execution
+    command: notebook.cell.cancelExecution
+    order: 7
+
+# ── Insert ───────────────────────────────────────────────────────────
+- group: 2_insert
+  items:
+  - title: Insert Code Cell Above
+    command: notebook.cell.insertCodeCellAbove
+    order: 1
+  - title: Insert Code Cell Below
+    command: notebook.cell.insertCodeCellBelow
+    order: 2
+  - title: Insert Markdown Cell Above
+    command: notebook.cell.insertMarkdownCellAbove
+    order: 3
+  - title: Insert Markdown Cell Below
+    command: notebook.cell.insertMarkdownCellBelow
+    order: 4
+
+# ── Cell Operations ──────────────────────────────────────────────────
+- group: 3_cell
+  items:
+  - title: Move Cell Up
+    command: notebook.cell.moveUp
+    order: 1
+  - title: Move Cell Down
+    command: notebook.cell.moveDown
+    order: 2
+  - title: Copy Cell Up
+    command: notebook.cell.copyUp
+    order: 3
+  - title: Copy Cell Down
+    command: notebook.cell.copyDown
+    order: 4
+  - title: Split Cell
+    command: notebook.cell.split
+    order: 5
+  - title: Join with Cell Above
+    command: notebook.cell.joinAbove
+    order: 6
+  - title: Join with Cell Below
+    command: notebook.cell.joinBelow
+    order: 7
+  - title: Delete Cell
+    command: notebook.cell.delete
+    order: 8
+  - title: Change Cell to Code
+    command: notebook.cell.changeToCode
+    order: 9
+  - title: Change Cell to Markdown
+    command: notebook.cell.changeToMarkdown
+    order: 10
+
+# ── Output ───────────────────────────────────────────────────────────
+- group: 4_output
+  items:
+  - title: Clear Cell Outputs
+    command: notebook.cell.clearOutputs
+    order: 1
+  - title: Clear All Outputs
+    command: notebook.clearAllCellsOutputs
+    order: 2
+  - title: Copy Cell Output
+    command: notebook.cellOutput.copy
+    order: 3
+  - title: Open Cell Output in Text Editor
+    command: notebook.cellOutput.openInTextEditor
+    order: 4
+
+# ── View ─────────────────────────────────────────────────────────────
+- group: 5_view
+  items:
+  - title: Collapse All Cell Inputs
+    command: notebook.cell.collapseAllCellInputs
+    order: 1
+  - title: Expand All Cell Inputs
+    command: notebook.cell.expandAllCellInputs
+    order: 2
+  - title: Collapse All Cell Outputs
+    command: notebook.cell.collapseAllCellOutputs
+    order: 3
+  - title: Expand All Cell Outputs
+    command: notebook.cell.expandAllCellOutputs
+    order: 4
+  - title: Toggle Cell Line Numbers
+    command: notebook.cell.toggleLineNumbers
+    order: 5
+  - title: Render All Markdown Cells
+    command: notebook.renderAllMarkdownCells
+    order: 6
+
+# ── AI ───────────────────────────────────────────────────────────────
+- group: 9_ai
+  when: "hasExtension(GitHub.copilot-chat)"
+  items:
+  - title: Add Cell Output to Chat
+    command: notebook.cellOutput.addToChat
+    order: 1
+  - title: Explain Error
+    command: notebook.cell.chat.explainError
+    order: 2
+  - title: Fix Error
+    command: notebook.cell.chat.fixError
+    order: 3

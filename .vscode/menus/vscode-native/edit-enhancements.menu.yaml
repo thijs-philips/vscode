@@ -1,0 +1,64 @@
+# Edit Menu Enhancements
+# Injects new submenus into the built-in Edit menu.
+# Avoids duplicating anything already in Edit or text-toolkit's 9_text group.
+#
+# text-toolkit already provides (in Edit → 9_text):
+#   Convert Case, Line Operations, Sort, EOL Conversion, Blank Operations,
+#   Copy Filename, Line Filtering, Sequence & Numbering, Join/Split, Alignment
+#
+# This file adds:
+#   - Paste Special (group 6_paste)
+#   - Encode / Decode (group 7_encode)
+#   - Selections (group 8_selections)
+
+name: edit-enhancements
+menu: MenubarEditMenu
+
+items:
+
+# ── Paste Special ────────────────────────────────────────────────────
+- group: 6_paste
+  title: Paste Special
+  items:
+  - title: Paste As…
+    command: editor.action.pasteAs
+    order: 1
+  - title: Paste as Plain Text
+    command: editor.action.pasteAsText
+    order: 2
+
+# ── Encode / Decode ──────────────────────────────────────────────────
+- group: 7_encode
+  title: Encode / Decode
+  items:
+  - title: Encode to HTML Entities
+    command: editor.emmet.action.updateTag
+    when: "hasExtension(GitHub.copilot-chat)"
+    order: 1
+    # placeholder — use chat-based encode if no native command
+
+# ── Selection Extras ─────────────────────────────────────────────────
+- group: 8_selections
+  title: Selections
+  items:
+  - title: Select All Occurrences of Find Match
+    command: editor.action.selectHighlights
+    order: 1
+  - title: Add Selection to Next Find Match
+    command: editor.action.addSelectionToNextFindMatch
+    order: 2
+  - title: Move Last Selection to Next Find Match
+    command: editor.action.moveSelectionToNextFindMatch
+    order: 3
+  - title: Select Brackets
+    command: editor.action.selectToBracket
+    order: 4
+  - title: Expand Selection
+    command: editor.action.smartSelect.expand
+    order: 5
+  - title: Shrink Selection
+    command: editor.action.smartSelect.shrink
+    order: 6
+  - title: Column (Box) Select
+    command: editor.action.toggleColumnSelection
+    order: 7

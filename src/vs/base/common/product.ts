@@ -90,6 +90,11 @@ export interface IProductConfiguration {
 	readonly downloadUrl?: string;
 	readonly updateUrl?: string;
 	readonly webUrl?: string;
+
+	readonly releaseRepository?: {
+		readonly owner: string;
+		readonly repo: string;
+	};
 	readonly webEndpointUrlTemplate?: string;
 	readonly webviewContentExternalBaseUrlTemplate?: string;
 	readonly target?: string;

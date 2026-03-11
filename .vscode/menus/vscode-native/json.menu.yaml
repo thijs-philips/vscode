@@ -1,0 +1,94 @@
+# JSON Menu
+# Top-level menu bar item, visible only for JSON/JSONC files.
+# Commands from: json-language-features, editor core.
+
+name: json
+menu: MenubarMainMenu
+title: JSON
+when: "editorLangId == json || editorLangId == jsonc"
+order: 7
+
+items:
+
+# ── Validate ─────────────────────────────────────────────────────────
+- group: 1_validate
+  items:
+  - title: Validate Document
+    command: json.validate
+    order: 1
+  - title: Clear Schema Cache
+    command: json.clearCache
+    order: 2
+
+# ── Format ───────────────────────────────────────────────────────────
+- group: 2_format
+  items:
+  - title: Format Document
+    command: editor.action.formatDocument
+    order: 1
+  - title: Format Selection
+    command: editor.action.formatSelection
+    when: "editorHasSelection"
+    order: 2
+  - title: Sort Document
+    command: json.sort
+    order: 3
+
+# ── Navigate ─────────────────────────────────────────────────────────
+- group: 3_navigate
+  items:
+  - title: Go to Symbol in Editor
+    command: workbench.action.gotoSymbol
+    order: 1
+  - title: Go to Definition
+    command: editor.action.revealDefinition
+    order: 2
+
+# ── View ─────────────────────────────────────────────────────────────
+- group: 4_view
+  items:
+  - title: Fold All
+    command: editor.foldAll
+    order: 1
+  - title: Unfold All
+    command: editor.unfoldAll
+    order: 2
+  - title: Fold Level 1
+    command: editor.foldLevel1
+    order: 3
+  - title: Fold Level 2
+    command: editor.foldLevel2
+    order: 4
+  - title: Fold Level 3
+    command: editor.foldLevel3
+    order: 5
+
+# ── Convert ──────────────────────────────────────────────────────────
+- group: 5_convert
+  items:
+  - title: Convert to YAML
+    command: extension.rightClickJson
+    when: "hasExtension(hilleer.yaml-plus-json)"
+    order: 1
+  - title: Preview as YAML
+    command: extension.previewAsYaml
+    when: "hasExtension(hilleer.yaml-plus-json)"
+    order: 2
+  - title: Convert Selection to YAML
+    command: extension.jsonSelectionToYaml
+    when: "hasExtension(hilleer.yaml-plus-json) && editorHasSelection"
+    order: 3
+
+# ── AI ───────────────────────────────────────────────────────────────
+- group: 9_ai
+  when: "hasExtension(GitHub.copilot-chat)"
+  items:
+  - title: Explain this JSON
+    chat: "Explain what this JSON document describes, its structure and purpose."
+    order: 1
+  - title: Validate Schema
+    chat: "Validate this JSON against its schema. Report any issues."
+    order: 2
+  - title: Generate Schema
+    chat: "Generate a JSON Schema for this document."
+    order: 3

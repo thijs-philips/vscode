@@ -169,6 +169,13 @@
 		"controlUrl": ""
 	},
 	"extensionEnabledApiProposals": {
+		"vscode.menu-loader": [
+			"menuAccess",
+			"contribGlobalToolbar"
+		],
+		"vscode.text-toolkit": [
+			"menuAccess"
+		],
 		"GitHub.copilot": [
 			"inlineCompletionsAdditions"
 		],
