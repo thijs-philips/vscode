@@ -190,20 +190,36 @@ async function main() {
 	}
 
 	// Verify the build output was produced from the current commit
-	if (fs.existsSync(BUILT_PRODUCT_PATH)) {
-		const builtProduct = JSON.parse(fs.readFileSync(BUILT_PRODUCT_PATH, 'utf8'));
-		if (builtProduct.commit !== commit) {
-			throw new Error(
-				`Stale build detected!\n` +
-				`  Git HEAD commit:   ${commit}\n` +
-				`  Built app commit:  ${builtProduct.commit || '(none)'}\n` +
-				`The installer was built from a different commit. Rebuild with buildscripts/build-production.bat first.`
-			);
-		}
-		console.log(`Build commit verified: ${builtProduct.commit.substring(0, 12)}`);
-	} else {
-		console.log('WARN: Cannot verify build commit (built product.json not found). Proceeding anyway.');
+	if (!fs.existsSync(BUILT_PRODUCT_PATH)) {
+		throw new Error(`Built product.json not found at ${BUILT_PRODUCT_PATH}. Run buildscripts/build-production.bat first.`);
 	}
+	const builtProduct = JSON.parse(fs.readFileSync(BUILT_PRODUCT_PATH, 'utf8'));
+	if (builtProduct.commit !== commit) {
+		throw new Error(
+			`Stale build detected!\n` +
+			`  Git HEAD commit:   ${commit}\n` +
+			`  Built app commit:  ${builtProduct.commit || '(none)'}\n` +
+			`The installer was built from a different commit. Rebuild with buildscripts/build-production.bat first.`
+		);
+	}
+	console.log(`Build commit verified: ${builtProduct.commit.substring(0, 12)}`);
+
+	// Verify the installer was built AFTER the app (catches Inno Setup failures
+	// where a stale installer survives from a previous build)
+	const appModified = fs.statSync(BUILT_PRODUCT_PATH).mtimeMs;
+	const installerModified = fs.statSync(INSTALLER_PATH).mtimeMs;
+	if (installerModified < appModified) {
+		const appDate = new Date(appModified).toISOString();
+		const installerDate = new Date(installerModified).toISOString();
+		throw new Error(
+			`Stale installer detected!\n` +
+			`  App built at:       ${appDate}\n` +
+			`  Installer built at: ${installerDate}\n` +
+			`The installer is older than the app — Inno Setup likely failed.\n` +
+			`Rebuild with buildscripts/build-production.bat first.`
+		);
+	}
+	console.log(`Installer freshness verified (built ${new Date(installerModified).toLocaleTimeString()})`);
 	console.log();
 
 	const token = await getToken();

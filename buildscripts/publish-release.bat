@@ -8,6 +8,7 @@ echo  Publishes the installer to GitHub Releases
 echo  so the embedded update server can find it.
 echo.
 echo  What it does:
+echo    0. Bumps the patch version and commits
 echo    1. Runs build-production.bat (app + installer)
 echo    2. Creates a GitHub release tagged v{version}-{commit}
 echo    3. Uploads the installer + SHA256 checksum
@@ -18,6 +19,19 @@ echo.
 echo  Auth: uses GITHUB_TOKEN env var, or git
 echo        credential helper for github.com.
 echo ============================================
+echo.
+
+:: Step 0: Bump version in package.json and commit
+echo Bumping version...
+pushd %~dp0\..
+call node scripts\bump-version.js
+if %ERRORLEVEL% neq 0 (
+    echo.
+    echo Version bump failed, aborting.
+    popd
+    exit /b 1
+)
+popd
 echo.
 
 :: Step 1: Full production build (app + installer)
