@@ -42,7 +42,20 @@ if %ERRORLEVEL% neq 0 (
     exit /b %ERRORLEVEL%
 )
 
-:: Step 2: Publish installer to GitHub Releases
+:: Step 2: Push commits to remote (GitHub needs the commit to create a release)
+echo.
+echo Pushing to origin...
+pushd %~dp0\..
+git push
+if %ERRORLEVEL% neq 0 (
+    echo.
+    echo Git push failed, aborting publish.
+    popd
+    exit /b 1
+)
+popd
+
+:: Step 3: Publish installer to GitHub Releases
 echo.
 echo Publishing to GitHub Releases...
 echo.
