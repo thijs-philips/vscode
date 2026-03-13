@@ -9,6 +9,10 @@ import { scanMenuFiles, watchMenuDirectories } from './scanner';
 import { buildConditionContext, ConditionContext } from './conditions';
 import { buildMenu, BuiltMenu } from './menuBuilder';
 
+function isToolbarDefinition(definition: MenuDefinition): boolean {
+	return definition.menu === 'GlobalToolbar';
+}
+
 /**
  * Manages the full lifecycle of dynamically loaded menus:
  * - Scans directories for `.menu.yaml` files
@@ -44,18 +48,18 @@ export class MenuManager implements vscode.Disposable {
 	/**
 	 * Initial load: scan files and build menus.
 	 */
-	load(): void {
+	async load(): Promise<void> {
 		this._definitions = scanMenuFiles();
-		this._buildAll();
+		await this._buildAll();
 	}
 
 	/**
 	 * Full reload: rescan files, tear down existing menus, rebuild.
 	 */
-	reload(): void {
+	async reload(): Promise<void> {
 		this._tearDownAll();
 		this._definitions = scanMenuFiles();
-		this._buildAll();
+		await this._buildAll();
 		vscode.window.setStatusBarMessage(
 			`Menu Loader: Loaded ${this._definitions.length} menu definition(s)`,
 			3000,
@@ -65,9 +69,9 @@ export class MenuManager implements vscode.Disposable {
 	/**
 	 * Rebuild all menus with fresh context (no file rescan).
 	 */
-	private _rebuild(): void {
+	private async _rebuild(): Promise<void> {
 		this._tearDownAll();
-		this._buildAll();
+		await this._buildAll();
 	}
 
 	/**
@@ -80,7 +84,7 @@ export class MenuManager implements vscode.Disposable {
 		}
 		this._rebuildTimer = setTimeout(() => {
 			this._rebuildTimer = undefined;
-			this._rebuild();
+			void this._rebuild();
 		}, 150);
 	}
 
@@ -94,18 +98,23 @@ export class MenuManager implements vscode.Disposable {
 		}
 		this._rebuildTimer = setTimeout(() => {
 			this._rebuildTimer = undefined;
-			this.reload();
+			void this.reload();
 		}, 300);
 	}
 
 	/**
 	 * Build menus for all definitions using the current context.
 	 */
-	private _buildAll(): void {
+	private async _buildAll(): Promise<void> {
 		const ctx: ConditionContext = buildConditionContext();
+		const toolbarEnabled = vscode.workspace.getConfiguration('menuLoader').get<boolean>('toolbar.enabled', true);
 
 		for (const definition of this._definitions) {
-			const built = buildMenu(definition, ctx);
+			if (!toolbarEnabled && isToolbarDefinition(definition)) {
+				continue;
+			}
+
+			const built = await buildMenu(definition, ctx);
 			this._builtMenus.push(built);
 		}
 	}

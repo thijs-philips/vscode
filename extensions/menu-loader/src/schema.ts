@@ -42,6 +42,19 @@ export interface MenuDefinitionYaml {
 	order?: number;
 
 	/**
+	 * Relative position reference. Places the menu relative to an existing
+	 * item in the target menu:
+	 * - `^Title` — before the item titled "Title"
+	 * - `$Title` — after the item titled "Title"
+	 * - `^#commandId` — before the item with that command id
+	 * - `$#commandId` — after the item with that command id
+	 *
+	 * Resolves into concrete `group` and `order` values at build time.
+	 * Falls back to `group` / `order` if the reference cannot be found.
+	 */
+	position?: string;
+
+	/**
 	 * Optional codicon name for the submenu, e.g. `'markdown'`.
 	 */
 	icon?: string;
@@ -70,6 +83,12 @@ export interface MenuNodeYaml {
 
 	/** Sort order within the parent. */
 	order?: number;
+
+	/**
+	 * Relative position reference (`^Title`, `$Title`, `^#cmdId`, `$#cmdId`).
+	 * Resolved at build time into concrete `group` and `order`.
+	 */
+	position?: string;
 
 	/** Optional when-clause. If false, this node and all children are hidden. */
 	when?: string;
@@ -118,6 +137,7 @@ export interface MenuDefinition {
 	title: string | undefined;
 	group: string | undefined;
 	order: number | undefined;
+	position: string | undefined;
 	icon: string | undefined;
 	items: MenuNode[];
 	/** Absolute path of the source file — used for diagnostics. */
@@ -174,6 +194,7 @@ export interface MenuNode {
 	title: string | undefined;
 	group: string | undefined;
 	order: number | undefined;
+	position: string | undefined;
 	when: string | undefined;
 	icon: string | undefined;
 	action: MenuAction | undefined;

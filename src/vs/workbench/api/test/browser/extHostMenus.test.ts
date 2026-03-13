@@ -16,7 +16,7 @@ suite('ExtHostMenus', () => {
 	const disposables = new DisposableStore();
 	let extHostMenus: ExtHostMenus;
 	let rpcProtocol: TestRPCProtocol;
-	let addedItems: { handle: number; menuId: string; commandId?: string; submenuId?: string; title: string; group?: string; order?: number }[];
+	let addedItems: { handle: number; menuId: string; commandId?: string; submenuId?: string; title: string; icon?: string; group?: string; order?: number }[];
 	let removedHandles: number[];
 	let menuItems: IMenuItemInfoDto[];
 
@@ -30,11 +30,27 @@ suite('ExtHostMenus', () => {
 			override async $getMenuItems(_menuId: string): Promise<IMenuItemInfoDto[]> {
 				return menuItems.filter(i => i.menuId === _menuId);
 			}
-			override $addMenuItem(handle: number, menuId: string, commandId: string, title: string, group: string | undefined, order: number | undefined): void {
-				addedItems.push({ handle, menuId, commandId, title, group, order });
+			override $addMenuItem(
+				handle: number,
+				menuId: string,
+				commandId: string,
+				title: string,
+				icon: string | undefined,
+				group: string | undefined,
+				order: number | undefined,
+			): void {
+				addedItems.push({ handle, menuId, commandId, title, icon, group, order });
 			}
-			override $addSubmenu(handle: number, menuId: string, submenuId: string, title: string, group: string | undefined, order: number | undefined): void {
-				addedItems.push({ handle, menuId, submenuId, title, group, order });
+			override $addSubmenu(
+				handle: number,
+				menuId: string,
+				submenuId: string,
+				title: string,
+				icon: string | undefined,
+				group: string | undefined,
+				order: number | undefined,
+			): void {
+				addedItems.push({ handle, menuId, submenuId, title, icon, group, order });
 			}
 			override $removeMenuItem(handle: number): void {
 				removedHandles.push(handle);
@@ -75,6 +91,7 @@ suite('ExtHostMenus', () => {
 		const disposable = extHostMenus.addMenuItem('MenubarFileMenu', {
 			commandId: 'myExtension.myCommand',
 			title: 'My Command',
+			icon: 'play',
 			group: '1_new',
 			order: 10,
 		});
@@ -86,6 +103,7 @@ suite('ExtHostMenus', () => {
 		assert.strictEqual(addedItems[0].menuId, 'MenubarFileMenu');
 		assert.strictEqual(addedItems[0].commandId, 'myExtension.myCommand');
 		assert.strictEqual(addedItems[0].title, 'My Command');
+		assert.strictEqual(addedItems[0].icon, 'play');
 		assert.strictEqual(addedItems[0].group, '1_new');
 		assert.strictEqual(addedItems[0].order, 10);
 	});

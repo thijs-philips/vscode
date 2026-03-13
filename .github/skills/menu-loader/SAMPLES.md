@@ -269,7 +269,46 @@ items:
 
 ---
 
-## 9. Using the Developer Tools
+## 9. Implicit Order & Relative Positioning
+
+Items are ordered by their position in the YAML file when `order` is omitted. Use `position` to place items relative to existing (built-in) entries.
+
+```yaml
+name: go-extras
+menu: MenubarGoMenu
+
+items:
+  # Items receive implicit order 1, 2, 3 from YAML position:
+  - group: z_extras
+    items:
+      - title: Go to Symbol in Workspace
+        command: workbench.action.showAllSymbols
+      - title: Go to Bracket
+        command: editor.action.jumpToBracket
+      - title: Go to Next Error
+        command: editor.action.marker.nextInFiles
+
+  # Place this submenu directly after the built-in "Selection" item:
+  - group: 1_basic
+    position: "$Selection"
+    items:
+      - title: Bookmark Navigation
+        items:
+          - title: Jump to Next Bookmark
+            command: bookmarks.jumpToNext
+          - title: Jump to Previous Bookmark
+            command: bookmarks.jumpToPrevious
+```
+
+**Key points:**
+- Leaf items get `order: 1`, `2`, `3` automatically from YAML position — no need to number them
+- `position: "$Selection"` places the group directly after the "Selection" item (match by title)
+- Use `$#commandId` to match by command ID instead: `position: "$#editor.action.clipboardPasteAction"`
+- `^` prefix means *before* instead of *after*: `position: "^Selection"`
+
+---
+
+## 10. Using the Developer Tools
 
 Recommended workflow for authoring new menus:
 
@@ -291,4 +330,4 @@ Step 5: Run "Menu Loader: Show Menu Tree" (menuLoader.showMenuTree)
 Step 6: Menu auto-reloads on save, or run "Menu Loader: Reload Menus"
 ```
 
-These commands are available in the Command Palette and output to an untitled markdown editor. Give the output to Copilot for it to write or fix your YAML.
+These commands are available in the Command Palette (and in the **View → Menu Layout** submenu). Output is printed to an untitled markdown editor — give it to Copilot for it to write or fix your YAML.

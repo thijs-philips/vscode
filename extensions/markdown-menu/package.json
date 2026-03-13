@@ -63,45 +63,7 @@
         "icon": "$(open-preview)"
       }
     ],
-    "menus": {
-      "window/toolbar": [
-        {
-          "command": "markdownMenu.bold",
-          "group": "markdown_format",
-          "when": "editorLangId == markdown"
-        },
-        {
-          "command": "markdownMenu.italic",
-          "group": "markdown_format",
-          "when": "editorLangId == markdown"
-        },
-        {
-          "command": "markdownMenu.heading",
-          "group": "markdown_format",
-          "when": "editorLangId == markdown"
-        },
-        {
-          "command": "markdownMenu.link",
-          "group": "markdown_insert",
-          "when": "editorLangId == markdown"
-        },
-        {
-          "command": "markdownMenu.codeBlock",
-          "group": "markdown_insert",
-          "when": "editorLangId == markdown"
-        },
-        {
-          "command": "markdownMenu.bulletList",
-          "group": "markdown_insert",
-          "when": "editorLangId == markdown"
-        },
-        {
-          "command": "markdownMenu.preview",
-          "group": "markdown_preview",
-          "when": "editorLangId == markdown"
-        }
-      ]
-    }
+    "menus": {}
   },
   "scripts": {
     "compile": "gulp compile-extension:markdown-menu",

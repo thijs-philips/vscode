@@ -41,6 +41,8 @@ export async function resolvePosition(
 
 	try {
 		const items = await vscode.menus.getMenuItems(menuId);
+
+		// First pass: exact match
 		for (const item of items) {
 			const matches = byCommand
 				? item.commandId === searchValue
@@ -51,6 +53,19 @@ export async function resolvePosition(
 				const baseOrder = item.order ?? 0;
 				const order = before ? baseOrder - 0.5 : baseOrder + 0.5;
 				return { group, order };
+			}
+		}
+
+		// Second pass (title only): case-insensitive match
+		if (!byCommand) {
+			const lowerNeedle = searchValue.toLowerCase();
+			for (const item of items) {
+				if (item.title.toLowerCase() === lowerNeedle) {
+					const group = item.group;
+					const baseOrder = item.order ?? 0;
+					const order = before ? baseOrder - 0.5 : baseOrder + 0.5;
+					return { group, order };
+				}
 			}
 		}
 	} catch {

@@ -8,7 +8,7 @@ name: notebook
 menu: MenubarMainMenu
 title: Notebook
 when: "notebookEditorFocused"
-order: 7
+position: "$Selection"
 
 items:
 

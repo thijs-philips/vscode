@@ -60,7 +60,29 @@
 			{
 				"command": "menuLoader.checkDuplicates",
 				"title": "Menu Loader: Check for Duplicate Commands"
+			},
+			{
+				"command": "menuLoader.openMenusFolder",
+				"title": "Menu Loader: Open Menus Folder"
+			},
+			{
+				"command": "menuLoader.createMenu",
+				"title": "Menu Loader: Create New Menu with Copilot"
+			},
+			{
+				"command": "menuLoader.toggleToolbar",
+				"title": "Menu Loader: Toggle Toolbar"
 			}
-		]
+		],
+		"configuration": {
+			"title": "Menu Loader",
+			"properties": {
+				"menuLoader.toolbar.enabled": {
+					"type": "boolean",
+					"default": true,
+					"description": "Show toolbar items contributed by Menu Loader .menu.yaml files."
+				}
+			}
+		}
 	}
 }

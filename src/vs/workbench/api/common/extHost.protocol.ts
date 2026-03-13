@@ -3622,8 +3622,8 @@ export interface IMenuItemInfoDto {
 
 export interface MainThreadMenusShape extends IDisposable {
 	$getMenuItems(menuId: string): Promise<IMenuItemInfoDto[]>;
-	$addMenuItem(handle: number, menuId: string, commandId: string, title: string, group: string | undefined, order: number | undefined): void;
-	$addSubmenu(handle: number, menuId: string, submenuId: string, title: string, group: string | undefined, order: number | undefined): void;
+	$addMenuItem(handle: number, menuId: string, commandId: string, title: string, icon: string | undefined, group: string | undefined, order: number | undefined): void;
+	$addSubmenu(handle: number, menuId: string, submenuId: string, title: string, icon: string | undefined, group: string | undefined, order: number | undefined): void;
 	$removeMenuItem(handle: number): void;
 }
 

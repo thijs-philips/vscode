@@ -65,6 +65,12 @@ declare module 'vscode' {
 		title: string;
 
 		/**
+		 * Optional codicon id for the menu item, e.g. `'play'`.
+		 * This is primarily useful for toolbar-style menus.
+		 */
+		icon?: string;
+
+		/**
 		 * The group to place the menu item in, e.g. `'navigation'`.
 		 * Items are sorted by group first, then by order within the group.
 		 */
@@ -84,6 +90,11 @@ declare module 'vscode' {
 		 * The display title for the submenu.
 		 */
 		title: string;
+
+		/**
+		 * Optional codicon id for the submenu, e.g. `'symbol-string'`.
+		 */
+		icon?: string;
 
 		/**
 		 * The group to place the submenu in.

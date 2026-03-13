@@ -7,7 +7,7 @@ name: html-css
 menu: MenubarMainMenu
 title: HTML / CSS
 when: "editorLangId == html || editorLangId == css || editorLangId == scss || editorLangId == less"
-order: 7
+position: "$Selection"
 
 items:
 
@@ -16,116 +16,87 @@ items:
   items:
   - title: Expand Abbreviation
     command: editor.emmet.action.expandAbbreviation
-    order: 1
   - title: Wrap with Abbreviation
     command: editor.emmet.action.wrapWithAbbreviation
-    order: 2
   - title: Remove Tag
     command: editor.emmet.action.removeTag
     when: "editorLangId == html"
-    order: 3
   - title: Update Tag
     command: editor.emmet.action.updateTag
     when: "editorLangId == html"
-    order: 4
   - title: Split / Join Tag
     command: editor.emmet.action.splitJoinTag
     when: "editorLangId == html"
-    order: 5
   - title: Go to Matching Pair
     command: editor.emmet.action.matchTag
     when: "editorLangId == html"
-    order: 6
   - title: Balance (Inward)
     command: editor.emmet.action.balanceIn
     when: "editorLangId == html"
-    order: 7
   - title: Balance (Outward)
     command: editor.emmet.action.balanceOut
     when: "editorLangId == html"
-    order: 8
 
 # ── Emmet Navigate ───────────────────────────────────────────────────
 - group: 2_emmet_nav
   items:
   - title: Go to Next Edit Point
     command: editor.emmet.action.nextEditPoint
-    order: 1
   - title: Go to Previous Edit Point
     command: editor.emmet.action.prevEditPoint
-    order: 2
   - title: Select Next Item
     command: editor.emmet.action.selectNextItem
-    order: 3
   - title: Select Previous Item
     command: editor.emmet.action.selectPrevItem
-    order: 4
 
 # ── Emmet Math & Values ─────────────────────────────────────────────
 - group: 3_emmet_values
   items:
   - title: Evaluate Math Expression
     command: editor.emmet.action.evaluateMathExpression
-    order: 1
   - title: Reflect CSS Value
     command: editor.emmet.action.reflectCSSValue
     when: "editorLangId == css || editorLangId == scss || editorLangId == less"
-    order: 2
   - title: Update Image Size
     command: editor.emmet.action.updateImageSize
     when: "editorLangId == html"
-    order: 3
   - title: Increment by 0.1
     command: editor.emmet.action.incrementNumberByOneTenth
-    order: 4
   - title: Increment by 1
     command: editor.emmet.action.incrementNumberByOne
-    order: 5
   - title: Increment by 10
     command: editor.emmet.action.incrementNumberByTen
-    order: 6
   - title: Decrement by 0.1
     command: editor.emmet.action.decrementNumberByOneTenth
-    order: 7
   - title: Decrement by 1
     command: editor.emmet.action.decrementNumberByOne
-    order: 8
   - title: Decrement by 10
     command: editor.emmet.action.decrementNumberByTen
-    order: 9
 
 # ── Format ───────────────────────────────────────────────────────────
 - group: 4_format
   items:
   - title: Format Document
     command: editor.action.formatDocument
-    order: 1
   - title: Format Selection
     command: editor.action.formatSelection
     when: "editorHasSelection"
-    order: 2
   - title: Toggle Line Comment
     command: editor.action.commentLine
-    order: 3
   - title: Toggle Emmet Comment
     command: editor.emmet.action.toggleComment
-    order: 4
 
 # ── Navigate ─────────────────────────────────────────────────────────
 - group: 5_navigate
   items:
   - title: Go to Definition
     command: editor.action.revealDefinition
-    order: 1
   - title: Go to References
     command: editor.action.goToReferences
-    order: 2
   - title: Go to Symbol in Editor
     command: workbench.action.gotoSymbol
-    order: 3
   - title: Merge Lines
     command: editor.emmet.action.mergeLines
-    order: 4
 
 # ── AI ───────────────────────────────────────────────────────────────
 - group: 9_ai
@@ -133,13 +104,9 @@ items:
   items:
   - title: Explain
     command: github.copilot.chat.explain
-    order: 1
   - title: Fix
     command: github.copilot.chat.fix
-    order: 2
   - title: Generate Tests
     command: github.copilot.chat.generateTests
-    order: 3
   - title: Generate Docs
     command: github.copilot.chat.generateDocs
-    order: 4

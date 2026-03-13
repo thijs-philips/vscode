@@ -1,0 +1,37 @@
+# Markdown toolbar strip, visible only while editing Markdown.
+
+name: markdown-toolbar
+menu: window/toolbar
+when: "editorLangId == markdown"
+
+items:
+
+- group: 3_markdown_format
+  items:
+  - title: Toggle Bold
+    snippet: "**${TM_SELECTED_TEXT:text}**"
+    icon: bold
+  - title: Toggle Italic
+    snippet: "*${TM_SELECTED_TEXT:text}*"
+    icon: italic
+  - title: Insert Heading
+    snippet: "## ${1:Heading}\n$0"
+    icon: symbol-structure
+
+- group: 4_markdown_insert
+  items:
+  - title: Insert Link
+    snippet: "[${1:text}](${2:url})"
+    icon: link
+  - title: Insert Code Block
+    snippet: "```${1:language}\n$0\n```"
+    icon: code
+  - title: Insert Bullet List
+    snippet: "- ${1:item}\n- ${2:item}\n- ${3:item}\n$0"
+    icon: list-unordered
+
+- group: 5_markdown_preview
+  items:
+  - title: Open Preview
+    command: markdown.showPreview
+    icon: open-preview

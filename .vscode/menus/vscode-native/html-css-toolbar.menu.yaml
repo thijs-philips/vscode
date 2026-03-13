@@ -1,0 +1,39 @@
+# HTML / CSS toolbar strip, visible for HTML, CSS, SCSS, and Less files.
+
+name: html-css-toolbar
+menu: window/toolbar
+when: "editorLangId == html || editorLangId == css || editorLangId == scss || editorLangId == less"
+
+items:
+
+- group: 3_emmet
+  items:
+  - title: Expand Abbreviation
+    command: editor.emmet.action.expandAbbreviation
+    icon: symbol-snippet
+  - title: Wrap with Abbreviation
+    command: editor.emmet.action.wrapWithAbbreviation
+    icon: surround-with
+
+- group: 4_html_tags
+  when: "editorLangId == html"
+  items:
+  - title: Remove Tag
+    command: editor.emmet.action.removeTag
+    icon: close
+  - title: Update Tag
+    command: editor.emmet.action.updateTag
+    icon: edit
+  - title: Go to Matching Pair
+    command: editor.emmet.action.matchTag
+    icon: bracket
+
+- group: 5_format
+  items:
+  - title: Format Document
+    command: editor.action.formatDocument
+    icon: whitespace
+  - title: Open Preview
+    command: simple-browser.api.open
+    icon: open-preview
+    when: "editorLangId == html"

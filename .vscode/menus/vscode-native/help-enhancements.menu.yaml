@@ -1,0 +1,26 @@
+# Help Menu Enhancements
+# Injects a Developer submenu into the built-in Help menu,
+# below Toggle Developer Tools.
+
+name: help-enhancements
+menu: MenubarHelpMenu
+
+items:
+
+# ── Developer ────────────────────────────────────────────────────────
+- group: 5_tools
+  title: Developer
+  position: "$#workbench.action.toggleDevTools"
+  items:
+  - title: Reload Window
+    command: workbench.action.reloadWindow
+  - title: Reload with Extensions Disabled
+    command: workbench.action.reloadWindowWithExtensionsDisabled
+  - title: Open Log File…
+    command: workbench.action.openLogFile
+  - title: Show Logs…
+    command: workbench.action.showLogs
+  - title: Open Logs Folder
+    command: workbench.action.openLogsFolder
+  - title: Inspect Context Keys
+    command: workbench.action.inspectContextKeys

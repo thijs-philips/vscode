@@ -24,9 +24,8 @@ import { ITelemetryService } from '../../../../../platform/telemetry/common/tele
 import { ChatContextKeys } from '../../common/actions/chatContextKeys.js';
 import { ConfirmedReason, IChatToolInvocation, ToolConfirmKind } from '../../common/chatService/chatService.js';
 import { isResponseVM } from '../../common/model/chatViewModel.js';
-import { ChatConfiguration, ChatModeKind } from '../../common/constants.js';
+import { AcceptToolConfirmationActionId, ChatConfiguration, ChatModeKind, globalAutoApproveDescription, SkipToolConfirmationActionId } from '../../common/constants.js';
 import { IChatWidget, IChatWidgetService } from '../chat.js';
-import { globalAutoApproveDescription } from '../tools/languageModelToolsService.js';
 import { ToolsScope } from '../widget/input/chatSelectedTools.js';
 import { CHAT_CATEGORY } from './chatActions.js';
 import { showToolsPicker } from './chatToolPicker.js';
@@ -43,10 +42,8 @@ type SelectedToolClassification = {
 	total: { classification: 'SystemMetaData'; purpose: 'FeatureInsight'; comment: 'Number of total chat tools' };
 };
 
-export const AcceptToolConfirmationActionId = 'workbench.action.chat.acceptTool';
-export const SkipToolConfirmationActionId = 'workbench.action.chat.skipTool';
-export const AcceptToolPostConfirmationActionId = 'workbench.action.chat.acceptToolPostExecution';
-export const SkipToolPostConfirmationActionId = 'workbench.action.chat.skipToolPostExecution';
+// Re-export action IDs from common/constants to avoid breaking existing consumers.
+export { AcceptToolConfirmationActionId, SkipToolConfirmationActionId, AcceptToolPostConfirmationActionId, SkipToolPostConfirmationActionId } from '../../common/constants.js';
 
 export interface IToolConfirmationActionContext {
 	readonly sessionResource?: URI;

@@ -17,8 +17,8 @@ import { migrateLegacyTerminalToolSpecificData } from '../../common/chat.js';
 import { IChatToolInvocation } from '../../common/chatService/chatService.js';
 import { IChatResponseViewModel, isRequestVM, isResponseVM } from '../../common/model/chatViewModel.js';
 import { isToolResultInputOutputDetails, isToolResultOutputDetails, toolContentToA11yString } from '../../common/tools/languageModelToolsService.js';
+import { AcceptToolConfirmationActionId } from '../../common/constants.js';
 import { CancelChatActionId } from '../actions/chatExecuteActions.js';
-import { AcceptToolConfirmationActionId } from '../actions/chatToolActions.js';
 import { ChatTreeItem } from '../chat.js';
 
 export const getToolConfirmationAlert = (accessor: ServicesAccessor, toolInvocation: IChatToolInvocation[]) => {

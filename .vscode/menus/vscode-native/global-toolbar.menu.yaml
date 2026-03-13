@@ -1,0 +1,33 @@
+# Global toolbar strip for the most commonly-used workbench actions.
+
+name: global-toolbar
+menu: window/toolbar
+
+items:
+
+- group: 1_navigation
+  items:
+  - title: Go Back
+    command: workbench.action.navigateBack
+    icon: arrow-left
+  - title: Go Forward
+    command: workbench.action.navigateForward
+    icon: arrow-right
+  - title: Quick Open
+    command: workbench.action.quickOpen
+    icon: go-to-file
+  - title: Command Palette
+    command: workbench.action.showCommands
+    icon: terminal-cmd
+
+- group: 2_workspace
+  items:
+  - title: Save All
+    command: workbench.action.files.saveAll
+    icon: save-all
+  - title: Run Task
+    command: workbench.action.tasks.runTask
+    icon: tools
+  - title: Toggle Terminal
+    command: workbench.action.terminal.toggleTerminal
+    icon: terminal

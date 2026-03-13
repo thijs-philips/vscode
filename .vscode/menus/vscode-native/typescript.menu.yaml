@@ -7,7 +7,7 @@ name: typescript
 menu: MenubarMainMenu
 title: TypeScript
 when: "editorLangId == typescript || editorLangId == typescriptreact"
-order: 7
+position: "$Selection"
 
 items:
 

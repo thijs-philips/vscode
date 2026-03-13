@@ -32,7 +32,7 @@ export class ExtHostMenus implements ExtHostMenusShape {
 
 	addMenuItem(menuId: string, options: vscode.MenuItemOptions): vscode.Disposable {
 		const handle = this._handleCounter++;
-		this._proxy.$addMenuItem(handle, menuId, options.commandId, options.title, options.group, options.order);
+		this._proxy.$addMenuItem(handle, menuId, options.commandId, options.title, options.icon, options.group, options.order);
 		return toDisposable(() => {
 			this._proxy.$removeMenuItem(handle);
 		});
@@ -41,7 +41,7 @@ export class ExtHostMenus implements ExtHostMenusShape {
 	addSubmenu(menuId: string, options: vscode.SubmenuOptions): { submenuId: string; disposable: vscode.Disposable } {
 		const handle = this._handleCounter++;
 		const submenuId = `extHostSubmenu.${handle}`;
-		this._proxy.$addSubmenu(handle, menuId, submenuId, options.title, options.group, options.order);
+		this._proxy.$addSubmenu(handle, menuId, submenuId, options.title, options.icon, options.group, options.order);
 		return {
 			submenuId,
 			disposable: toDisposable(() => {

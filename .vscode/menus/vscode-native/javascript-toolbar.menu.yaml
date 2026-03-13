@@ -1,0 +1,40 @@
+# JavaScript toolbar strip, visible only for JavaScript / JSX files.
+
+name: javascript-toolbar
+menu: window/toolbar
+when: "editorLangId == javascript || editorLangId == javascriptreact"
+
+items:
+
+- group: 3_js_imports
+  items:
+  - title: Organize Imports
+    command: editor.action.organizeImports
+    icon: files
+  - title: Remove Unused Imports
+    command: javascript.removeUnusedImports
+    icon: trash
+
+- group: 4_js_navigate
+  items:
+  - title: Go to Definition
+    command: editor.action.revealDefinition
+    icon: go-to-file
+  - title: Go to Type Definition
+    command: editor.action.goToTypeDefinition
+    icon: symbol-interface
+  - title: Find All References
+    command: references-view.findReferences
+    icon: references
+
+- group: 5_js_refactor
+  items:
+  - title: Rename Symbol
+    command: editor.action.rename
+    icon: symbol-key
+  - title: Quick Fix
+    command: editor.action.quickFix
+    icon: lightbulb
+  - title: Refactor…
+    command: editor.action.refactor
+    icon: wrench

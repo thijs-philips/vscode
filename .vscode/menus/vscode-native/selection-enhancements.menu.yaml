@@ -1,0 +1,30 @@
+# Selection Menu Enhancements
+# Adds commands missing from the built-in Selection menu.
+#
+# Already built-in:
+#   1_basic  — Select All, Expand Selection, Shrink Selection
+#   2_line   — Copy/Move Line Up/Down, Duplicate Selection
+#   3_multi  — Add Cursor Above/Below, Add Cursors to Line Ends,
+#              Add Next/Previous Occurrence, Select All Occurrences
+#   4_config — Column Selection Mode, Switch Multi-Cursor Modifier
+#
+# This file adds:
+#   3_multi  — Move Last Selection to Next Find Match
+#   1_basic  — Select Brackets
+
+name: selection-enhancements
+menu: MenubarSelectionMenu
+
+items:
+
+- group: 1_basic
+  items:
+  - title: Select Brackets
+    command: editor.action.selectToBracket
+    order: 4
+
+- group: 3_multi
+  items:
+  - title: Move Last Selection to Next Find Match
+    command: editor.action.moveSelectionToNextFindMatch
+    order: 7

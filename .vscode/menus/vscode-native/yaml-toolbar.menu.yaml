@@ -1,0 +1,28 @@
+# YAML toolbar strip, visible only for YAML files.
+
+name: yaml-toolbar
+menu: window/toolbar
+when: "editorLangId == yaml"
+
+items:
+
+- group: 3_yaml_format
+  items:
+  - title: Format Document
+    command: editor.action.formatDocument
+    icon: whitespace
+  - title: Convert Indentation to Spaces
+    command: editor.action.indentationToSpaces
+    icon: indent
+
+- group: 4_yaml_view
+  items:
+  - title: Fold All
+    command: editor.foldAll
+    icon: fold
+  - title: Unfold All
+    command: editor.unfoldAll
+    icon: unfold
+  - title: Go to Symbol
+    command: workbench.action.gotoSymbol
+    icon: symbol-key

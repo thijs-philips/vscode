@@ -19,6 +19,16 @@
 		}
 	},
 	"contributes": {
+		"configuration": {
+			"title": "Toolbar Sample",
+			"properties": {
+				"toolbarSample.enabled": {
+					"type": "boolean",
+					"default": false,
+					"description": "Show the toolbar sample buttons in the global toolbar strip."
+				}
+			}
+		},
 		"commands": [
 			{
 				"command": "toolbarSample.hello",
@@ -40,15 +50,18 @@
 			"window/toolbar": [
 				{
 					"command": "toolbarSample.hello",
-					"group": "navigation"
+					"group": "navigation",
+					"when": "config.toolbarSample.enabled"
 				},
 				{
 					"command": "toolbarSample.build",
-					"group": "navigation"
+					"group": "navigation",
+					"when": "config.toolbarSample.enabled"
 				},
 				{
 					"command": "toolbarSample.run",
-					"group": "navigation"
+					"group": "navigation",
+					"when": "config.toolbarSample.enabled"
 				}
 			]
 		}

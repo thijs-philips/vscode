@@ -7,7 +7,7 @@ name: yaml
 menu: MenubarMainMenu
 title: YAML
 when: "editorLangId == yaml"
-order: 7
+position: "$Selection"
 
 items:
 
@@ -16,49 +16,37 @@ items:
   items:
   - title: Format Document
     command: editor.action.formatDocument
-    order: 1
   - title: Format Selection
     command: editor.action.formatSelection
     when: "editorHasSelection"
-    order: 2
   - title: Convert Indentation to Spaces
     command: editor.action.indentationToSpaces
-    order: 3
   - title: Detect Indentation
     command: editor.action.detectIndentation
-    order: 4
 
 # ── View ─────────────────────────────────────────────────────────────
 - group: 2_view
   items:
   - title: Fold All
     command: editor.foldAll
-    order: 1
   - title: Unfold All
     command: editor.unfoldAll
-    order: 2
   - title: Toggle Fold at Cursor
     command: editor.toggleFold
-    order: 3
   - title: Fold Level 1
     command: editor.foldLevel1
-    order: 4
   - title: Fold Level 2
     command: editor.foldLevel2
-    order: 5
   - title: Fold Level 3
     command: editor.foldLevel3
-    order: 6
 
 # ── Navigate ─────────────────────────────────────────────────────────
 - group: 3_navigate
   items:
   - title: Go to Symbol in Editor
     command: workbench.action.gotoSymbol
-    order: 1
   - title: Go to Definition
     command: editor.action.revealDefinition
-    order: 2
 
 # ── Convert (marketplace extensions) ─────────────────────────────────
 - group: 4_convert
@@ -66,15 +54,12 @@ items:
   - title: Convert to JSON
     command: extension.rightClickYaml
     when: "hasExtension(hilleer.yaml-plus-json)"
-    order: 1
   - title: Convert to JSON (yaml2json)
     command: yaml2json.document
     when: "hasExtension(ahebrank.yaml2json)"
-    order: 2
   - title: Preview as JSON
     command: extension.previewAsJson
     when: "hasExtension(hilleer.yaml-plus-json)"
-    order: 3
 
 # ── AI ───────────────────────────────────────────────────────────────
 - group: 9_ai
@@ -82,10 +67,7 @@ items:
   items:
   - title: Explain this YAML
     chat: "Explain what this YAML document describes, its structure and purpose."
-    order: 1
   - title: Validate & Suggest Fixes
     chat: "Validate this YAML document. Check for syntax issues, missing required fields, and suggest fixes."
-    order: 2
   - title: Generate Schema
     chat: "Generate a JSON Schema for this YAML document."
-    order: 3

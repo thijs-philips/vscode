@@ -7,7 +7,7 @@ name: markdown
 menu: MenubarMainMenu
 title: Markdown
 when: "editorLangId == markdown"
-order: 7
+position: "$Selection"
 
 items:
 

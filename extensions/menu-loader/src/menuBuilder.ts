@@ -7,6 +7,7 @@ import * as vscode from 'vscode';
 import { MenuDefinition, MenuNode, MenuAction } from './schema';
 import { ConditionContext, evaluateWhen } from './conditions';
 import { expandVariables } from './variables';
+import { resolvePosition } from './positioning';
 
 /** Counter for generating unique command ids for action wrappers. */
 let commandCounter = 0;
@@ -29,7 +30,7 @@ export interface BuiltMenu {
  * Returns a {@link BuiltMenu} whose disposables must be disposed to tear
  * the menu down.
  */
-export function buildMenu(definition: MenuDefinition, ctx: ConditionContext): BuiltMenu {
+export async function buildMenu(definition: MenuDefinition, ctx: ConditionContext): Promise<BuiltMenu> {
 	const disposables: vscode.Disposable[] = [];
 
 	// Top-level when gate
@@ -40,19 +41,29 @@ export function buildMenu(definition: MenuDefinition, ctx: ConditionContext): Bu
 	const targetMenuId = definition.menu;
 
 	if (definition.title) {
+		// Resolve relative position if specified
+		let group = definition.group;
+		let order = definition.order;
+		if (definition.position) {
+			const resolved = await resolvePosition(targetMenuId, definition.position, group, order);
+			group = resolved.group;
+			order = resolved.order;
+		}
+
 		// Create a top-level submenu in the target menu
 		const { submenuId, disposable } = vscode.menus.addSubmenu(targetMenuId, {
 			title: definition.title,
-			group: definition.group,
-			order: definition.order,
+			icon: definition.icon,
+			group,
+			order,
 		});
 		disposables.push(disposable);
 
 		// Populate this submenu with child items
-		buildChildren(submenuId, definition.items, ctx, disposables, 0);
+		await buildChildren(submenuId, definition.items, ctx, disposables, 0);
 	} else {
 		// No title = inject items directly into the target menu
-		buildChildren(targetMenuId, definition.items, ctx, disposables, 0);
+		await buildChildren(targetMenuId, definition.items, ctx, disposables, 0);
 	}
 
 	return { definition, disposables };
@@ -67,13 +78,13 @@ export function buildMenu(definition: MenuDefinition, ctx: ConditionContext): Bu
  * @param disposables Accumulator for all created disposables.
  * @param depth Current nesting depth (0 = top of items tree).
  */
-function buildChildren(
+async function buildChildren(
 	parentMenuId: string,
 	nodes: MenuNode[],
 	ctx: ConditionContext,
 	disposables: vscode.Disposable[],
 	depth: number,
-): void {
+): Promise<void> {
 	for (const node of nodes) {
 		// Skip hidden nodes (and all their children)
 		if (!evaluateWhen(node.when, ctx)) {
@@ -82,13 +93,13 @@ function buildChildren(
 
 		if (node.children.length > 0 && !node.action) {
 			// This is a container node (group or submenu)
-			if (node.group && depth === 0) {
-				// Depth 0 group: flat separator section
+			if (node.group && depth === 0 && !node.title) {
+				// Depth 0 group without title: flat separator section
 				// Items get the group string prepended so VS Code renders separators
-				buildGroupSection(parentMenuId, node, ctx, disposables, depth);
+				await buildGroupSection(parentMenuId, node, ctx, disposables, depth);
 			} else {
-				// Nested submenu flyout
-				buildSubmenu(parentMenuId, node, ctx, disposables, depth);
+				// Submenu flyout — either nested depth, or depth 0 group with title
+				await buildSubmenu(parentMenuId, node, ctx, disposables, depth);
 			}
 		} else if (node.action) {
 			// Leaf item with an action
@@ -101,14 +112,21 @@ function buildChildren(
  * Build a group section: items share the same `group` string and are rendered
  * with a separator before/after.
  */
-function buildGroupSection(
+async function buildGroupSection(
 	parentMenuId: string,
 	node: MenuNode,
 	ctx: ConditionContext,
 	disposables: vscode.Disposable[],
 	depth: number,
-): void {
-	const groupName = node.group!;
+): Promise<void> {
+	// Resolve group via relative position if specified
+	let groupName = node.group!;
+	let groupOrder = node.order;
+	if (node.position) {
+		const resolved = await resolvePosition(parentMenuId, node.position, groupName, groupOrder);
+		groupName = resolved.group ?? groupName;
+		groupOrder = resolved.order;
+	}
 
 	for (const child of node.children) {
 		if (!evaluateWhen(child.when, ctx)) {
@@ -120,17 +138,19 @@ function buildGroupSection(
 			const title = child.title ?? child.group ?? 'Untitled';
 			const { submenuId, disposable } = vscode.menus.addSubmenu(parentMenuId, {
 				title,
+				icon: child.icon,
 				group: groupName,
 				order: child.order,
 			});
 			disposables.push(disposable);
-			buildChildren(submenuId, child.children, ctx, disposables, depth + 1);
+			await buildChildren(submenuId, child.children, ctx, disposables, depth + 1);
 		} else if (child.action) {
 			// Leaf inside a group
 			const commandId = registerActionCommand(child.action, disposables);
 			disposables.push(vscode.menus.addMenuItem(parentMenuId, {
 				commandId,
 				title: child.title ?? commandId,
+				icon: child.icon,
 				group: groupName,
 				order: child.order,
 			}));
@@ -141,22 +161,33 @@ function buildGroupSection(
 /**
  * Build a submenu flyout node.
  */
-function buildSubmenu(
+async function buildSubmenu(
 	parentMenuId: string,
 	node: MenuNode,
 	ctx: ConditionContext,
 	disposables: vscode.Disposable[],
 	depth: number,
-): void {
+): Promise<void> {
 	const title = node.title ?? node.group ?? 'Untitled';
+
+	// Resolve group/order via relative position if specified
+	let group = node.group;
+	let order = node.order;
+	if (node.position) {
+		const resolved = await resolvePosition(parentMenuId, node.position, group, order);
+		group = resolved.group;
+		order = resolved.order;
+	}
+
 	const { submenuId, disposable } = vscode.menus.addSubmenu(parentMenuId, {
 		title,
-		group: node.group,
-		order: node.order,
+		icon: node.icon,
+		group,
+		order,
 	});
 	disposables.push(disposable);
 
-	buildChildren(submenuId, node.children, ctx, disposables, depth + 1);
+	await buildChildren(submenuId, node.children, ctx, disposables, depth + 1);
 }
 
 /**
@@ -176,6 +207,7 @@ function buildLeafItem(
 	disposables.push(vscode.menus.addMenuItem(parentMenuId, {
 		commandId,
 		title: node.title ?? commandId,
+		icon: node.icon,
 		group: node.group,
 		order: node.order,
 	}));

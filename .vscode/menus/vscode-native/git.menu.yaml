@@ -7,8 +7,8 @@
 name: git
 menu: MenubarMainMenu
 title: Git
-when: "scmProviderCount > 0"
-order: 8
+when: "workspaceContains(.git)"
+position: "$Selection"
 
 items:
 
@@ -17,154 +17,111 @@ items:
   items:
   - title: Stage All Changes
     command: git.stageAll
-    order: 1
   - title: Unstage All Changes
     command: git.unstageAll
-    order: 2
   - title: Discard All Changes
     command: git.cleanAll
-    order: 3
   - title: Commit
     command: git.commit
-    order: 4
   - title: Commit Staged
     command: git.commitStaged
-    order: 5
   - title: Commit All
     command: git.commitAll
-    order: 6
   - title: Commit (Amend)
     command: git.commitAmend
-    order: 7
   - title: Undo Last Commit
     command: git.undoCommit
-    order: 8
 
 # ── Branch ───────────────────────────────────────────────────────────
 - group: 2_branch
   items:
   - title: Checkout to…
     command: git.checkout
-    order: 1
   - title: Create Branch…
     command: git.branch
-    order: 2
   - title: Create Branch From…
     command: git.branchFrom
-    order: 3
   - title: Delete Branch…
     command: git.deleteBranch
-    order: 4
   - title: Rename Branch…
     command: git.renameBranch
-    order: 5
   - title: Merge…
     command: git.merge
-    order: 6
   - title: Rebase Branch…
     command: git.rebase
-    order: 7
   - title: Publish Branch…
     command: git.publish
-    order: 8
 
 # ── Remote ───────────────────────────────────────────────────────────
 - group: 3_remote
   items:
   - title: Pull
     command: git.pull
-    order: 1
   - title: Pull (Rebase)
     command: git.pullRebase
-    order: 2
   - title: Push
     command: git.push
-    order: 3
   - title: Push (Follow Tags)
     command: git.pushWithTags
-    order: 4
   - title: Fetch
     command: git.fetch
-    order: 5
   - title: Fetch From All Remotes
     command: git.fetchAll
-    order: 6
   - title: Sync
     command: git.sync
-    order: 7
   - title: Add Remote…
     command: git.addRemote
-    order: 8
 
 # ── Stash ────────────────────────────────────────────────────────────
 - group: 4_stash
   items:
   - title: Stash
     command: git.stash
-    order: 1
   - title: Stash (Include Untracked)
     command: git.stashIncludeUntracked
-    order: 2
   - title: Stash Staged
     command: git.stashStaged
-    order: 3
   - title: Pop Latest Stash
     command: git.stashPopLatest
-    order: 4
   - title: Apply Latest Stash
     command: git.stashApplyLatest
-    order: 5
   - title: Pop Stash…
     command: git.stashPop
-    order: 6
   - title: Drop Stash…
     command: git.stashDrop
-    order: 7
   - title: View Stash…
     command: git.stashView
-    order: 8
 
 # ── Tags ─────────────────────────────────────────────────────────────
 - group: 5_tags
   items:
   - title: Create Tag…
     command: git.createTag
-    order: 1
   - title: Delete Tag…
     command: git.deleteTag
-    order: 2
   - title: Push Tags
     command: git.pushTags
-    order: 3
 
 # ── View ─────────────────────────────────────────────────────────────
 - group: 6_view
   items:
   - title: Open Changes
     command: git.openChange
-    order: 1
   - title: Open All Changes
     command: git.openAllChanges
-    order: 2
   - title: Close All Diff Editors
     command: git.closeAllDiffEditors
-    order: 3
   - title: Toggle Blame Decoration
     command: git.blame.toggleEditorDecoration
-    order: 4
   - title: Show Git Output
     command: git.showOutput
-    order: 5
 
 # ── Repo ─────────────────────────────────────────────────────────────
 - group: 7_repo
   items:
   - title: Clone…
     command: git.clone
-    order: 1
   - title: Initialize Repository
     command: git.init
-    order: 2
   - title: Cherry Pick…
     command: git.cherryPick
-    order: 3

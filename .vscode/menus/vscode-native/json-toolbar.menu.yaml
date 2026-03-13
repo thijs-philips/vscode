@@ -1,0 +1,28 @@
+# JSON toolbar strip, visible only for JSON / JSONC files.
+
+name: json-toolbar
+menu: window/toolbar
+when: "editorLangId == json || editorLangId == jsonc"
+
+items:
+
+- group: 3_json_format
+  items:
+  - title: Format Document
+    command: editor.action.formatDocument
+    icon: whitespace
+  - title: Sort Document
+    command: json.sort
+    icon: sort-precedence
+
+- group: 4_json_view
+  items:
+  - title: Fold All
+    command: editor.foldAll
+    icon: fold
+  - title: Unfold All
+    command: editor.unfoldAll
+    icon: unfold
+  - title: Go to Symbol
+    command: workbench.action.gotoSymbol
+    icon: symbol-key

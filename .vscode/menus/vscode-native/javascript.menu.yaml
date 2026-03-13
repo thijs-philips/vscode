@@ -7,7 +7,7 @@ name: javascript
 menu: MenubarMainMenu
 title: JavaScript
 when: "editorLangId == javascript || editorLangId == javascriptreact"
-order: 7
+position: "$Selection"
 
 items:
 

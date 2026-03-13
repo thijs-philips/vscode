@@ -10,11 +10,19 @@ import * as os from 'os';
 import * as yaml from 'js-yaml';
 import { MenuDefinition, MenuDefinitionYaml, MenuNode, MenuNodeYaml, MenuAction } from './schema';
 
+const menuIdAliases = new Map<string, string>([
+	['window/toolbar', 'GlobalToolbar'],
+]);
+
+export function normalizeMenuId(menuId: string): string {
+	return menuIdAliases.get(menuId) ?? menuId;
+}
+
 /**
  * Directories scanned for `.menu.yaml` files, in priority order
  * (project-local overrides global).
  */
-function getMenuDirectories(): string[] {
+export function getMenuDirectories(): string[] {
 	const dirs: string[] = [];
 
 	// Global: ~/.vscode/menus/
@@ -97,11 +105,12 @@ export function parseMenuYaml(content: string, sourcePath: string): MenuDefiniti
 
 	return {
 		name: raw.name,
-		menu: raw.menu,
+		menu: normalizeMenuId(raw.menu),
 		when: raw.when,
 		title: raw.title,
 		group: raw.group,
 		order: raw.order,
+		position: raw.position,
 		icon: raw.icon,
 		items: normaliseNodes(raw.items ?? []),
 		sourcePath,
@@ -112,14 +121,15 @@ export function parseMenuYaml(content: string, sourcePath: string): MenuDefiniti
  * Convert raw YAML nodes into normalised {@link MenuNode} objects.
  */
 function normaliseNodes(nodes: MenuNodeYaml[]): MenuNode[] {
-	return nodes.map(normaliseNode);
+	return nodes.map((raw, i) => normaliseNode(raw, i));
 }
 
-function normaliseNode(raw: MenuNodeYaml): MenuNode {
+function normaliseNode(raw: MenuNodeYaml, index: number): MenuNode {
 	return {
 		title: raw.title,
 		group: raw.group,
-		order: raw.order,
+		order: raw.order ?? (index + 1),
+		position: raw.position,
 		when: raw.when,
 		icon: raw.icon,
 		action: extractAction(raw),

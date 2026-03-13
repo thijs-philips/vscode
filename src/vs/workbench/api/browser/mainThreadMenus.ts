@@ -9,6 +9,7 @@ import { MainContext, MainThreadMenusShape, ExtHostMenusShape, ExtHostContext, I
 import { MenuId, MenuRegistry, isIMenuItem, isISubmenuItem } from '../../../platform/actions/common/actions.js';
 import { CommandsRegistry } from '../../../platform/commands/common/commands.js';
 import { ILocalizedString } from '../../../platform/action/common/action.js';
+import { ThemeIcon } from '../../../base/common/themables.js';
 
 @extHostNamedCustomer(MainContext.MainThreadMenus)
 export class MainThreadMenus extends Disposable implements MainThreadMenusShape {
@@ -93,7 +94,7 @@ export class MainThreadMenus extends Disposable implements MainThreadMenusShape 
 		return result;
 	}
 
-	$addMenuItem(handle: number, menuId: string, commandId: string, title: string, group: string | undefined, order: number | undefined): void {
+	$addMenuItem(handle: number, menuId: string, commandId: string, title: string, icon: string | undefined, group: string | undefined, order: number | undefined): void {
 		const id = MenuId.for(menuId);
 
 		// Register the command if it doesn't exist yet
@@ -109,6 +110,7 @@ export class MainThreadMenus extends Disposable implements MainThreadMenusShape 
 			command: {
 				id: commandId,
 				title,
+				icon: icon ? ThemeIcon.fromId(icon) : undefined,
 			},
 			group,
 			order,
@@ -118,13 +120,14 @@ export class MainThreadMenus extends Disposable implements MainThreadMenusShape 
 		this._itemDisposables.set(handle, disposable);
 	}
 
-	$addSubmenu(handle: number, menuId: string, submenuId: string, title: string, group: string | undefined, order: number | undefined): void {
+	$addSubmenu(handle: number, menuId: string, submenuId: string, title: string, icon: string | undefined, group: string | undefined, order: number | undefined): void {
 		const parentId = MenuId.for(menuId);
 		const submenu = MenuId.for(submenuId);
 
 		const disposable = MenuRegistry.appendMenuItem(parentId, {
 			submenu,
 			title: { value: title, original: title },
+			icon: icon ? ThemeIcon.fromId(icon) : undefined,
 			group,
 			order,
 		});

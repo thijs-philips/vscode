@@ -24,6 +24,7 @@ title: <string>         # Display label for the submenu entry (omit to inject it
 when: <string>          # When-clause — hides entire menu if false
 group: <string>         # Group string on the top-level submenu entry
 order: <number>         # Sort order within the group
+position: <string>      # Relative position reference (e.g. '$Selection', '^Run')
 icon: <string>          # Codicon name (e.g. 'markdown', 'git-merge')
 items: <MenuNodeYaml[]> # REQUIRED — tree of groups and items
 ```
@@ -50,14 +51,22 @@ Run `menuLoader.listMenuIds` for the full list of ~70 locations.
 Each entry in `items:` is a node. Three kinds of nodes exist:
 
 ### Group Node
-Has `group` + `items`, no `title`, no action. At depth 0 creates a separator-delimited section. At deeper levels creates a submenu.
+Has `group` + `items`, no action. At depth 0 without `title` creates a separator-delimited section. At depth 0 with `title` creates a submenu flyout placed in that group. At deeper levels creates a submenu.
 
 ```yaml
+# Flat group (no title) — items appear directly with separator
 - group: 1_format
   when: "editorLangId == markdown"   # optional
   items:
     - title: Bold
       snippet: "**${TM_SELECTED_TEXT}**"
+
+# Titled group — creates a submenu flyout in the group
+- group: 8_testing
+  title: Testing
+  items:
+    - title: Run All Tests
+      command: testing.runAll
 ```
 
 ### Submenu Node
@@ -81,8 +90,9 @@ Has `title` + exactly ONE action field. No `items`.
   command: editor.action.formatDocument
   when: "editorHasSelection == false"
   icon: layout
-  order: 1
 ```
+
+`order` is auto-assigned from YAML position when omitted. Use explicit `order` only when interleaving with built-in menu items.
 
 ### All Node Fields
 
@@ -90,7 +100,8 @@ Has `title` + exactly ONE action field. No `items`.
 |---|---|---|---|
 | `title` | string | On leaves/submenus | Display label |
 | `group` | string | On group nodes | Group identifier. Sortable prefix: `1_name`, `2_name` |
-| `order` | number | No | Sort order within parent |
+| `order` | number | No | Sort order within parent. **Auto-assigned from YAML position (1-based) when omitted.** |
+| `position` | string | No | Relative position reference (`$Title`, `^Title`, `$#cmdId`, `^#cmdId`) |
 | `when` | string | No | When-clause — hides node if false |
 | `icon` | string | No | Codicon name |
 | `command` | string or object | Leaf only | Execute a VS Code command |
@@ -235,7 +246,25 @@ Action values (shell, snippet, url, clipboard, chat) support `${variable}` place
 
 ## Positioning
 
-Items within the same group are sorted by `order`. Groups are sorted alphanumerically by their `group` string. Use numeric prefixes for predictable ordering:
+### Implicit order from YAML position
+
+When `order` is omitted, items are automatically assigned order values based on their position in the YAML file (1-based). The first item gets `order: 1`, the second `order: 2`, etc. This means **YAML file order = menu order** by default:
+
+```yaml
+items:
+  - title: Run Build Task       # implicit order: 1
+    command: workbench.action.tasks.build
+  - title: Run Test Task         # implicit order: 2
+    command: workbench.action.tasks.test
+  - title: Run Task…             # implicit order: 3
+    command: workbench.action.tasks.runTask
+```
+
+Explicit `order` overrides the implicit value when you need precise control.
+
+### Group ordering
+
+Groups are sorted alphanumerically by their `group` string. Use numeric prefixes for predictable ordering:
 
 ```yaml
 items:
@@ -246,3 +275,33 @@ items:
   - group: 9_other      # appears last
     items: [...]
 ```
+
+### Relative position references
+
+The `position` field places a menu item or submenu relative to an existing item in the target menu. This is useful for injecting items next to built-in menu entries without knowing their exact group/order values.
+
+| Syntax | Meaning |
+|---|---|
+| `$Title` | Place **after** the item titled "Title" |
+| `^Title` | Place **before** the item titled "Title" |
+| `$#commandId` | Place after the item with that command ID |
+| `^#commandId` | Place before the item with that command ID |
+
+At build time, `position` is resolved into concrete `group` and `order` values by querying the live menu. If the reference cannot be found, it falls back to the explicit `group`/`order` values (if any).
+
+```yaml
+# Top-level: place this menu right after the Selection dropdown
+name: typescript
+menu: MenubarMainMenu
+title: TypeScript
+position: "$Selection"
+
+# Node-level: place Paste Special right after the built-in Paste item
+- position: "$Paste"
+  title: Paste Special
+  items:
+    - title: Paste As…
+      command: editor.action.pasteAs
+```
+
+The `$` syntax does not conflict with `${variable}` placeholders — variables use braces (`${name}`), position references do not.

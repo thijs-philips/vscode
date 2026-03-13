@@ -27,6 +27,7 @@ The workspace has a set of curated menus for VS Code's built-in commands in **`.
 | `edit-enhancements.menu.yaml` | MenubarEditMenu | Injecting into built-in Edit menu |
 | `go-enhancements.menu.yaml` | MenubarGoMenu | Injecting testing + tasks into Go menu |
 | `view-enhancements.menu.yaml` | MenubarViewMenu | Injecting folding + display into View menu |
+| `help-enhancements.menu.yaml` | MenubarHelpMenu | Injecting Developer submenu into Help menu |
 
 The plan and conventions are documented in **`.vscode/menus/vscode-native/README.md`**.
 
@@ -76,6 +77,34 @@ items:
         command: myExtension.doSomething
 ```
 
+`order` is **optional on leaf items** — when omitted, items are ordered by their position in the YAML file (1-based). You only need explicit `order` when interleaving with built-in menu items.
+
+### Relative positioning
+
+Use the `position` field to place a menu relative to an existing item without knowing its exact group/order:
+
+```yaml
+# Place this entire dropdown right after the Selection menu
+name: typescript
+menu: MenubarMainMenu
+title: TypeScript
+position: "$Selection"
+
+# Place a node after a specific built-in command
+- position: "$#editor.action.clipboardPasteAction"
+  title: Paste Special
+  items:
+    - title: Paste As…
+      command: editor.action.pasteAs
+```
+
+| Syntax | Meaning |
+|---|---|
+| `$Title` | Place **after** the item titled "Title" |
+| `^Title` | Place **before** the item titled "Title" |
+| `$#commandId` | Place after the item with that command ID |
+| `^#commandId` | Place before the item with that command ID |
+
 ---
 
 ## Developer Tool Commands Reference
@@ -89,8 +118,12 @@ items:
 | **Generate Cache for Copilot** | `menuLoader.dumpAll` | Runs all five above, writes all cache files | all of the above |
 | **Check for Duplicates** | `menuLoader.checkDuplicates` | Detect commands duplicated across extensions and YAML menus | `duplicates.md` |
 | **Reload Menus** | `menuLoader.reload` | Force re-scan and rebuild menus from YAML | (none) |
+| **Open Menus Folder** | `menuLoader.openMenusFolder` | Reveal the menus directory in the Explorer | (none) |
+| **Create Menu with Copilot** | `menuLoader.createMenu` | Open Copilot Chat with a menu-builder prompt | (none) |
 
 All tools write output to `.vscode/menus/.cache/` AND open the file for the user to view.
+
+The menu-loader tools are also available from the menu bar: **View → Menu Layout** submenu.
 
 ---
 

@@ -1,0 +1,40 @@
+# Notebook toolbar strip, visible when a notebook editor is focused.
+
+name: notebook-toolbar
+menu: window/toolbar
+when: "notebookEditorFocused"
+
+items:
+
+- group: 3_notebook_run
+  items:
+  - title: Run All Cells
+    command: notebook.execute
+    icon: run-all
+  - title: Run Cell
+    command: notebook.cell.execute
+    icon: play
+  - title: Cancel Execution
+    command: notebook.cell.cancelExecution
+    icon: debug-stop
+
+- group: 4_notebook_insert
+  items:
+  - title: Insert Code Cell Below
+    command: notebook.cell.insertCodeCellBelow
+    icon: add
+  - title: Insert Markdown Cell Below
+    command: notebook.cell.insertMarkdownCellBelow
+    icon: markdown
+
+- group: 5_notebook_cell
+  items:
+  - title: Move Cell Up
+    command: notebook.cell.moveUp
+    icon: arrow-up
+  - title: Move Cell Down
+    command: notebook.cell.moveDown
+    icon: arrow-down
+  - title: Clear All Outputs
+    command: notebook.clearAllCellsOutputs
+    icon: clear-all
