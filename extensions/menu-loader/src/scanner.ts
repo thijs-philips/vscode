@@ -42,15 +42,33 @@ export function getMenuDirectories(): string[] {
 /**
  * Scan all known directories for `.menu.yaml` files and parse them
  * into {@link MenuDefinition} objects.
+ *
+ * When the same relative file path exists in both a local (workspace)
+ * directory and the global directory, the local version takes priority
+ * and the global file is skipped.  This lets users override shipped
+ * menus by placing an identically-named file in their project.
  */
 export function scanMenuFiles(): MenuDefinition[] {
-	const definitions: MenuDefinition[] = [];
+	const dirs = getMenuDirectories();
+	// dirs[0] is global, the rest are per-workspace (local).
+	const globalDir = dirs[0];
+	const localDirs = dirs.slice(1);
 
-	for (const dir of getMenuDirectories()) {
+	// Pass 1: collect local files and record their relative paths.
+	const definitions: MenuDefinition[] = [];
+	const seenRelativePaths = new Set<string>();
+
+	for (const dir of localDirs) {
 		if (!fs.existsSync(dir)) {
 			continue;
 		}
-		collectMenuFiles(dir, definitions);
+		collectMenuFiles(dir, dir, seenRelativePaths, definitions);
+	}
+
+	// Pass 2: collect global files, skipping any whose relative path
+	// was already provided by a local directory.
+	if (fs.existsSync(globalDir)) {
+		collectMenuFiles(globalDir, globalDir, seenRelativePaths, definitions);
 	}
 
 	return definitions;
@@ -59,8 +77,14 @@ export function scanMenuFiles(): MenuDefinition[] {
 /**
  * Recursively collect `.menu.yaml` / `.menu.yml` files from a directory
  * and its subdirectories, parsing each into a {@link MenuDefinition}.
+ *
+ * @param dir       The current directory being scanned.
+ * @param rootDir   The top-level menu directory (used to compute relative paths).
+ * @param seen      Set of relative paths already collected — files whose
+ *                  relative path is already in this set are skipped.
+ * @param out       Accumulator for parsed definitions.
  */
-function collectMenuFiles(dir: string, out: MenuDefinition[]): void {
+function collectMenuFiles(dir: string, rootDir: string, seen: Set<string>, out: MenuDefinition[]): void {
 	let entries: fs.Dirent[];
 	try {
 		entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -73,9 +97,14 @@ function collectMenuFiles(dir: string, out: MenuDefinition[]): void {
 		if (entry.isDirectory()) {
 			// Skip hidden directories and the .cache directory
 			if (!entry.name.startsWith('.')) {
-				collectMenuFiles(fullPath, out);
+				collectMenuFiles(fullPath, rootDir, seen, out);
 			}
 		} else if (entry.name.endsWith('.menu.yaml') || entry.name.endsWith('.menu.yml')) {
+			const relativePath = path.relative(rootDir, fullPath).replace(/\\/g, '/');
+			if (seen.has(relativePath)) {
+				continue; // a higher-priority directory already provided this file
+			}
+			seen.add(relativePath);
 			try {
 				const content = fs.readFileSync(fullPath, 'utf8');
 				const parsed = parseMenuYaml(content, fullPath);
