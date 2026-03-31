@@ -29,3 +29,7 @@ test-output.json
 test/componentFixtures/.screenshots/*
 !test/componentFixtures/.screenshots/baseline/
 dist
+
+/.github/skills/
+/.github/instructions/
+/.github/agents/

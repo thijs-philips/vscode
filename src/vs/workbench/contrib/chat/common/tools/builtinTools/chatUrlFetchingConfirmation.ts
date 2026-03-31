@@ -137,6 +137,16 @@ export class ChatUrlFetchingConfirmationContribution implements ILanguageModelTo
 			});
 		}
 
+		// Always offer a catch-all wildcard option so users can approve every website at once
+		actions.push({
+			label: localize('approveAllWebsites', "Allow all websites"),
+			select: async () => {
+				await this._approvePattern('https://*', forRequest, !forRequest);
+				await this._approvePattern('http://*', forRequest, !forRequest);
+				return true;
+			}
+		});
+
 		return actions;
 	}
 
