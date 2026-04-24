@@ -8,6 +8,7 @@ import { Codicon } from '../../../../../base/common/codicons.js';
 import { MarkdownString } from '../../../../../base/common/htmlContent.js';
 import { Iterable } from '../../../../../base/common/iterator.js';
 import { KeyCode, KeyMod } from '../../../../../base/common/keyCodes.js';
+import { DisposableStore } from '../../../../../base/common/lifecycle.js';
 import { autorun } from '../../../../../base/common/observable.js';
 import Severity from '../../../../../base/common/severity.js';
 import { URI } from '../../../../../base/common/uri.js';
@@ -330,9 +331,11 @@ export class ToggleAutoApproveAction extends Action2 {
 	}
 }
 
-export function registerChatToolActions() {
-	registerAction2(AcceptToolConfirmation);
-	registerAction2(SkipToolConfirmation);
-	registerAction2(ConfigureToolsAction);
-	registerAction2(ToggleAutoApproveAction);
+export function registerChatToolActions(): DisposableStore {
+	const store = new DisposableStore();
+	store.add(registerAction2(AcceptToolConfirmation));
+	store.add(registerAction2(SkipToolConfirmation));
+	store.add(registerAction2(ConfigureToolsAction));
+	store.add(registerAction2(ToggleAutoApproveAction));
+	return store;
 }
