@@ -23,8 +23,8 @@ import { IFileService } from '../../../files/common/files.js';
 import { IInstantiationService } from '../../../instantiation/common/instantiation.js';
 import { ILogService } from '../../../log/common/log.js';
 import { IAgentPluginManager, ISyncedCustomization } from '../../common/agentPluginManager.js';
-import { AgentSession, IAgent, IAgentAttachment, IAgentCreateSessionConfig, IAgentCreateSessionResult, IAgentDescriptor, IAgentDeltaEvent, IAgentMessageEvent, IAgentModelInfo, IAgentProgressEvent, IAgentResolveSessionConfigParams, IAgentSessionConfigCompletionsParams, IAgentSessionMetadata, IAgentSessionProjectInfo, IAgentSubagentStartedEvent, IAgentToolCompleteEvent, IAgentToolStartEvent } from '../../common/agentService.js';
-import { AutoApproveLevel, IPermissionsValue, ISchemaProperty, createSchema, platformSessionSchema, schemaProperty } from '../../common/agentHostSchema.js';
+import { AgentSession, IAgent, IAgentAttachment, IAgentCreateSessionConfig, IAgentCreateSessionResult, IAgentDescriptor, IAgentDeltaEvent, IAgentMessageEvent, IAgentModelInfo, IAgentProgressEvent, IAgentResolveSessionConfigParams, IAgentSessionConfigCompletionsParams, IAgentSessionMetadata, IAgentSessionProjectInfo, SessionHistoryEvent } from '../../common/agentService.js';
+import { AutoApproveLevel, ISchemaProperty, createSchema, platformSessionSchema, schemaProperty } from '../../common/agentHostSchema.js';
 import { SessionConfigKey } from '../../common/sessionConfigKeys.js';
 import { ISessionDataService, SESSION_DB_FILENAME } from '../../common/sessionDataService.js';
 import type { ResolveSessionConfigResult, SessionConfigCompletionsResult } from '../../common/state/protocol/commands.js';
@@ -121,7 +121,7 @@ function buildWorktreeAnnouncementText(branchName: string): string {
 	) + '\n\n';
 }
 
-type AgentMessageOrEvent = IAgentMessageEvent | IAgentToolStartEvent | IAgentToolCompleteEvent | IAgentSubagentStartedEvent;
+type AgentMessageOrEvent = SessionHistoryEvent;
 
 /**
  * Returns a copy of `messages` where `announcement` has been prepended to
@@ -620,7 +620,10 @@ export class CopilotAgent extends Disposable implements IAgent {
 		const values = sessionSchema.validateOrDefault(params.config, {
 			[SessionConfigKey.Isolation]: isolationValue,
 			[SessionConfigKey.AutoApprove]: 'default' satisfies AutoApproveLevel,
-			[SessionConfigKey.Permissions]: { allow: [], deny: [] } satisfies IPermissionsValue,
+			// Permissions intentionally omitted — leave unset so auto-approval
+			// falls through to the host-level `permissions` default, and only
+			// materializes on the session once the user hits "Allow in this
+			// Session".
 			...(branchDefault !== undefined ? { [SessionConfigKey.Branch]: branchDefault } : {}),
 		});
 
@@ -724,7 +727,7 @@ export class CopilotAgent extends Disposable implements IAgent {
 		// No SDK-level enqueue is needed.
 	}
 
-	async getSessionMessages(session: URI): Promise<(IAgentMessageEvent | IAgentToolStartEvent | IAgentToolCompleteEvent | IAgentSubagentStartedEvent)[]> {
+	async getSessionMessages(session: URI): Promise<SessionHistoryEvent[]> {
 		const sessionId = AgentSession.id(session);
 		const entry = this._sessions.get(sessionId) ?? await this._resumeSession(sessionId).catch(err => {
 			this._logService.warn(`[Copilot:${sessionId}] Failed to resume session for message lookup`, err);
