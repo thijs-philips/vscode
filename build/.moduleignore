@@ -246,3 +246,17 @@ zone.js/dist/**
 @github/copilot-sdk/node_modules/@github/copilot-linux-x64/**
 @github/copilot-sdk/node_modules/@github/copilot-win32-arm64/**
 @github/copilot-sdk/node_modules/@github/copilot-win32-x64/**
+
+# @opentelemetry - strip alternate builds. The package.json `main` always points
+# to build/src (CommonJS), so build/esm and build/esnext are dead weight that
+# also blow past Windows MAX_PATH (260 chars) when nested under
+# extensions/copilot/node_modules/@opentelemetry/exporter-*/node_modules/.
+@opentelemetry/*/build/esm/**
+@opentelemetry/*/build/esnext/**
+
+# Strip nested duplicate copies of @opentelemetry packages inside each
+# exporter-*/node_modules/. The exporters themselves are bundled into
+# extensions/copilot/dist/{extension,cli}.js by esbuild and are never resolved
+# from the loose filesystem at runtime, so these duplicates only contribute to
+# Windows path-length blow-ups (260+ chars) during installer extraction.
+@opentelemetry/*/node_modules/**

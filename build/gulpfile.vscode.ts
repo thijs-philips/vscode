@@ -652,7 +652,20 @@ function patchWin32DependenciesTask(destinationFolderName: string) {
 	return async () => {
 		const versionedResourcesFolder = util.getVersionedResourcesFolder('win32', commit!);
 		const deps = (await Promise.all([
-			glob('**/*.node', { cwd, ignore: 'extensions/node_modules/@parcel/watcher/**' }),
+			glob('**/*.node', {
+				cwd,
+				ignore: [
+					'extensions/node_modules/@parcel/watcher/**',
+					// Skip non-win32 native modules that vendored SDKs (copilot, claude, etc.)
+					// ship under platform/arch subfolders. rcedit cannot patch ELF/Mach-O.
+					'**/{prebuilds,vendor,bin,native}/**/*linux*/**',
+					'**/{prebuilds,vendor,bin,native}/**/*darwin*/**',
+					'**/{prebuilds,vendor,bin,native}/linux-*/**',
+					'**/{prebuilds,vendor,bin,native}/darwin-*/**',
+					'**/{prebuilds,vendor,bin,native}/*-linux/**',
+					'**/{prebuilds,vendor,bin,native}/*-darwin/**',
+				],
+			}),
 			glob('**/rg.exe', { cwd }),
 			glob('**/*explorer_command*.dll', { cwd }),
 		])).flatMap(o => o);

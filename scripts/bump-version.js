@@ -20,6 +20,7 @@ const { execSync } = require('child_process');
 
 const ROOT = path.join(__dirname, '..');
 const PACKAGE_JSON_PATH = path.join(ROOT, 'package.json');
+const COPILOT_PACKAGE_JSON_PATH = path.join(ROOT, 'extensions', 'copilot', 'package.json');
 
 function main() {
 	const bumpMinor = process.argv.includes('--minor');
@@ -62,8 +63,22 @@ function main() {
 
 	console.log(`Version bumped: ${currentVersion} → ${newVersion}`);
 
+	// Keep extensions/copilot/package.json's engines.vscode in sync with root version,
+	// otherwise the pre-commit hygiene hook rejects the commit.
+	const copilotText = fs.readFileSync(COPILOT_PACKAGE_JSON_PATH, 'utf8');
+	const copilotUpdated = copilotText.replace(
+		`"vscode": "^${currentVersion}"`,
+		`"vscode": "^${newVersion}"`
+	);
+	if (copilotUpdated === copilotText) {
+		console.error(`Failed to update engines.vscode in extensions/copilot/package.json (expected "^${currentVersion}").`);
+		process.exit(1);
+	}
+	fs.writeFileSync(COPILOT_PACKAGE_JSON_PATH, copilotUpdated, 'utf8');
+	console.log(`Synced extensions/copilot/package.json engines.vscode to ^${newVersion}`);
+
 	// Stage and commit
-	execSync('git add package.json', { cwd: ROOT, stdio: 'inherit' });
+	execSync('git add package.json extensions/copilot/package.json', { cwd: ROOT, stdio: 'inherit' });
 	execSync(`git commit -m "chore: bump version to ${newVersion}"`, { cwd: ROOT, stdio: 'inherit' });
 
 	console.log(`Committed version bump to ${newVersion}`);

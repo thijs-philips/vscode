@@ -62,8 +62,18 @@ const treeSitterGrammars: ITreeSitterGrammar[] = [
 const REPO_ROOT = path.join(__dirname, '..');
 
 async function removeCopilotCLIShim() {
+	// Local fork patch: do NOT remove the shims.txt marker. The packaging stream
+	// (vsce.listFiles → vinyl-fs lstat) races with this removal and aborts the
+	// build with ENOENT. Touching the marker (creating if missing) keeps the
+	// file present at all times so packaging is deterministic. Runtime treats
+	// the file as a "shims already created" sentinel, so an empty marker is OK.
 	const shimsPath = path.join(REPO_ROOT, 'node_modules', '@github', 'copilot', 'shims.txt');
-	await fs.promises.rm(shimsPath, { force: true }).catch(() => { /* ignore */ });
+	try {
+		await fs.promises.mkdir(path.dirname(shimsPath), { recursive: true });
+		await fs.promises.writeFile(shimsPath, 'Shims created successfully');
+	} catch {
+		/* ignore */
+	}
 }
 
 /**
