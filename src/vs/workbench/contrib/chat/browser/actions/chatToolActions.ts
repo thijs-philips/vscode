@@ -25,7 +25,8 @@ import { ITelemetryService } from '../../../../../platform/telemetry/common/tele
 import { ChatContextKeys } from '../../common/actions/chatContextKeys.js';
 import { ConfirmedReason, IChatToolInvocation, ToolConfirmKind } from '../../common/chatService/chatService.js';
 import { isResponseVM } from '../../common/model/chatViewModel.js';
-import { AcceptToolConfirmationActionId, ChatConfiguration, ChatModeKind, globalAutoApproveDescription, SkipToolConfirmationActionId } from '../../common/constants.js';
+import { AcceptToolConfirmationActionId, ChatConfiguration, ChatModeKind, SkipToolConfirmationActionId } from '../../common/constants.js';
+import { globalAutoApproveDescription } from '../tools/languageModelToolsService.js';
 import { IChatWidget, IChatWidgetService } from '../chat.js';
 import { ToolsScope } from '../widget/input/chatSelectedTools.js';
 import { CHAT_CATEGORY } from './chatActions.js';
