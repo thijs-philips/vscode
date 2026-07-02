@@ -50,3 +50,9 @@ dist
 .github/prompts/*.local.prompt.md
 .agents/skills/.local/
 .github/skills/.local/
+
+# Fork-local build/settings artifacts (never commit)
+.settings-snapshots/
+.settings-snapshots.zip
+product.json.local-backup
+publish-release.log
