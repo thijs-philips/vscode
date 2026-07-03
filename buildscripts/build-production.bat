@@ -1,5 +1,5 @@
 @echo off
-setlocal
+setlocal enabledelayedexpansion
 
 echo ============================================
 echo  build-production.bat
@@ -17,6 +17,23 @@ echo ============================================
 echo.
 
 pushd %~dp0\..
+
+:: Step 0 - Ensure signtool.exe (Windows SDK) is on PATH for native dependency patching
+where signtool.exe >nul 2>&1
+if %ERRORLEVEL% neq 0 (
+    echo [0/4] signtool.exe not on PATH, searching Windows SDK...
+    set "SIGNTOOL_DIR="
+    for /f "delims=" %%D in ('where /r "C:\Program Files (x86)\Windows Kits\10\bin" signtool.exe 2^>nul ^| findstr /i "x64"') do set "SIGNTOOL_DIR=%%~dpD"
+    if not defined SIGNTOOL_DIR (
+        for /f "delims=" %%D in ('where /r "C:\Program Files\Windows Kits\10\bin" signtool.exe 2^>nul ^| findstr /i "x64"') do set "SIGNTOOL_DIR=%%~dpD"
+    )
+    if defined SIGNTOOL_DIR (
+        echo       Found: !SIGNTOOL_DIR!signtool.exe
+        set "PATH=!SIGNTOOL_DIR!;%PATH%"
+    ) else (
+        echo       WARN: signtool.exe not found; native signature patching may fail.
+    )
+)
 
 :: Step 1 - Bundle the standalone application
 echo [1/4] Bundling standalone app (gulp vscode-win32-x64)...
