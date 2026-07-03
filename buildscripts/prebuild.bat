@@ -5,28 +5,46 @@ echo ============================================
 echo  prebuild.bat
 echo.
 echo  One-time setup before you can build or run:
-echo    1. Installs Node dependencies (npm ci)
-echo    2. Downloads the Electron binary
-echo    3. Rebuilds native Node modules
+echo    1. Selects the Node.js version from .nvmrc
+echo    2. Installs Node dependencies (npm ci)
+echo    3. Downloads the Electron binary
+echo    4. Rebuilds native Node modules
 echo.
 echo  Run this after cloning, or after changing
-echo  branches that update package-lock.json.
+echo  branches that update .nvmrc / package-lock.json.
 echo ============================================
 echo.
 
 pushd %~dp0\..
 
-echo [1/3] Installing Node dependencies...
+echo [1/4] Selecting Node.js version from .nvmrc...
+where fnm >nul 2>&1
+if %errorlevel%==0 (
+	:: fnm reads .nvmrc automatically when no version is passed, so the
+	:: required version is never hard-coded here. Installing it also lets
+	:: fnm's use-on-cd hook auto-select it for build.bat / run.bat later.
+	call fnm install
+	if errorlevel 1 goto fail
+	call fnm use
+	if errorlevel 1 goto fail
+) else (
+	echo WARN: fnm not found on PATH. Skipping automatic Node selection.
+	echo       Ensure your active Node.js matches the version in .nvmrc:
+	type .nvmrc
+)
+
+echo.
+echo [2/4] Installing Node dependencies...
 call npm ci
 if errorlevel 1 goto fail
 
 echo.
-echo [2/3] Downloading Electron...
+echo [3/4] Downloading Electron...
 call npm run electron
 if errorlevel 1 goto fail
 
 echo.
-echo [3/3] Rebuilding native modules...
+echo [4/4] Rebuilding native modules...
 call node build/npm/postinstall.ts
 if errorlevel 1 goto fail
 
