@@ -179,13 +179,10 @@ async function main() {
 	console.log(`Repository: ${owner}/${repo}`);
 	console.log();
 
-	// Warn if there are uncommitted changes
 	if (hasUncommittedChanges()) {
-		console.log('WARNING: You have uncommitted changes. The release will be tagged');
-		console.log('         with the current HEAD commit, not including your changes.');
-		console.log('         Consider committing first if those changes should be included.');
-		console.log();
+		throw new Error('Refusing to publish from a dirty working tree. Commit all source changes, rebuild, then publish.');
 	}
+
 	// Verify installer exists
 	if (!fs.existsSync(INSTALLER_PATH)) {
 		throw new Error(`Installer not found at ${INSTALLER_PATH}. Run buildscripts/build-production.bat first.`);

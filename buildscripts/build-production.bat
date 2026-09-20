@@ -54,12 +54,15 @@ if not exist "..\VSCode-win32-x64\!APP_EXE_BASENAME!.exe" (
     exit /b 1
 )
 
-:: Step 2 - Patch Copilot Chat vision gating
+:: Step 2 - Validate/patch the packaged Copilot Chat bundle
 echo.
-echo [2/4] Patching Copilot Chat vision...
-call node scripts\patch-copilot-vision.js
+echo [2/4] Validating Copilot Chat vision patch...
+call node scripts\patch-copilot-vision.js "..\VSCode-win32-x64\resources\app\extensions\copilot\dist\extension.js"
 if %ERRORLEVEL% neq 0 (
-    echo WARN: patch-copilot-vision.js returned non-zero, continuing.
+    echo.
+    echo FAILED: patch-copilot-vision.js exit code %ERRORLEVEL%
+    popd
+    exit /b 1
 )
 
 :: Step 3 - Copy inno_updater + vcruntime into tools directory

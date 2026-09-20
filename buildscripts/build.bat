@@ -22,11 +22,9 @@ call npm run compile
 if errorlevel 1 goto fail
 
 echo.
-echo [2/2] Applying Copilot Vision patch...
-call node scripts\patch-copilot-vision.js
-if errorlevel 1 (
-	echo WARN: patch-copilot-vision.js returned non-zero, continuing.
-)
+echo [2/2] Validating Copilot Vision behavior...
+call node scripts\patch-copilot-vision.js extensions\copilot\dist\extension.js
+if errorlevel 1 goto fail
 
 echo.
 echo === Dev build complete ===

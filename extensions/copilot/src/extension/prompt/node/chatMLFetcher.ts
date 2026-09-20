@@ -10,7 +10,7 @@ import { IAuthenticationService } from '../../../platform/authentication/common/
 import { CopilotToken } from '../../../platform/authentication/common/copilotToken';
 import { FetchStreamRecorder, IChatMLFetcher, IFetchMLOptions, Source } from '../../../platform/chat/common/chatMLFetcher';
 import { IChatQuotaService } from '../../../platform/chat/common/chatQuotaService';
-import { ChatFetchError, ChatFetchResponseType, ChatFetchRetriableError, ChatLocation, ChatResponse, ChatResponses, RESPONSE_CONTAINED_NO_CHOICES } from '../../../platform/chat/common/commonTypes';
+import { ChatFetchError, ChatFetchResponseType, ChatFetchRetriableError, ChatLocation, ChatResponse, ChatResponses, isVisionAttachmentInaccessibleError, RESPONSE_CONTAINED_NO_CHOICES } from '../../../platform/chat/common/commonTypes';
 import { IConversationOptions } from '../../../platform/chat/common/conversationOptions';
 import { getTextPart, toTextParts } from '../../../platform/chat/common/globalStringUtils';
 import { IInteractionService } from '../../../platform/chat/common/interactionService';
@@ -23,7 +23,7 @@ import { collectSingleLineErrorMessage, ILogService } from '../../../platform/lo
 import { FinishedCallback, getCopilotServiceRequestId, getRequestId, IResponseDelta, OptionalChatRequestParams, RequestId } from '../../../platform/networking/common/fetch';
 import { FetcherId, IFetcherService, Response } from '../../../platform/networking/common/fetcherService';
 import { IChatEndpoint, IEndpointBody, InteractionTypeOverride, postRequest, stringifyUrlOrRequestMetadata } from '../../../platform/networking/common/networking';
-import { CAPIChatMessage, ChatCompletion, FilterReason, FinishedCompletionReason, rawMessageToCAPI } from '../../../platform/networking/common/openai';
+import { ChatCompletion, FilterReason, FinishedCompletionReason, rawMessageToCAPI } from '../../../platform/networking/common/openai';
 import { sendEngineMessagesTelemetry } from '../../../platform/networking/node/chatStream';
 import { CAPIWebSocketErrorEvent, IChatWebSocketManager, isCAPIWebSocketError } from '../../../platform/networking/node/chatWebSocketManager';
 import { sendCommunicationErrorTelemetry } from '../../../platform/networking/node/stream';
@@ -138,6 +138,19 @@ export class ChatMLFetcherImpl extends AbstractChatMLFetcher {
 	 * Note: the returned array of strings may be less than `n` (e.g., in case there were errors during streaming)
 	 */
 	public async fetchMany(opts: IFetchMLOptions, token: CancellationToken): Promise<ChatResponses> {
+		const result = await this._fetchMany(opts, token);
+		if (!isVisionAttachmentInaccessibleError(result) || !this.filterImageMessages(opts.messages)) {
+			return result;
+		}
+
+		const messagesWithoutImages = opts.messages.map(message => Array.isArray(message.content)
+			? { ...message, content: message.content.filter(part => !('imageUrl' in part)) }
+			: message);
+		this._logService.warn('Vision attachment was rejected; retrying the request without image attachments.');
+		return this._fetchMany({ ...opts, messages: messagesWithoutImages }, token);
+	}
+
+	private async _fetchMany(opts: IFetchMLOptions, token: CancellationToken): Promise<ChatResponses> {
 		let { debugName, endpoint: chatEndpoint, finishedCb, location, messages, requestOptions, source, telemetryProperties, userInitiatedRequest, interactionTypeOverride, conversationId, webSocketConnectionId, turnId, topLevelTurnId, useWebSocket, ignoreStatefulMarker } = opts;
 		const interactionType = interactionTypeOverride ?? locationToIntent(location);
 		if (useWebSocket && this._consecutiveWebSocketRetryFallbacks >= ChatMLFetcherImpl._maxConsecutiveWebSocketFallbacks) {
@@ -1189,9 +1202,6 @@ export class ChatMLFetcherImpl extends AbstractChatMLFetcher {
 		};
 		additionalHeaders['X-Interaction-Type'] = agentInteractionType;
 		additionalHeaders['X-Agent-Task-Id'] = ourRequestId;
-		if (request.messages?.some((m: CAPIChatMessage) => Array.isArray(m.content) ? m.content.some(c => 'image_url' in c) : false) && chatEndpointInfo.supportsVision) {
-			additionalHeaders['Copilot-Vision-Request'] = 'true';
-		}
 		const connection = this._webSocketManager.getOrCreateConnection({ conversationId, modelId: chatEndpointInfo.model, connectionId: webSocketConnectionId }, additionalHeaders, ourRequestId);
 		try {
 			await connection.connect();
@@ -1492,9 +1502,6 @@ export class ChatMLFetcherImpl extends AbstractChatMLFetcher {
 			'X-Interaction-Id': this._interactionService.interactionId,
 			'X-Initiator': userInitiatedRequest ? 'user' : 'agent', // Agent = a system request / not the primary user query.
 		};
-		if (request.messages?.some((m: CAPIChatMessage) => Array.isArray(m.content) ? m.content.some(c => 'image_url' in c) : false) && chatEndpoint.supportsVision) {
-			additionalHeaders['Copilot-Vision-Request'] = 'true';
-		}
 		const telemetryData = TelemetryData.createAndMarkAsIssued({
 			endpoint: 'completions',
 			engineName: 'chat',

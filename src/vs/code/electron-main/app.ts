@@ -807,6 +807,15 @@ export class CodeApplication extends Disposable {
 			this.logService.warn(`[localUpdateServer] Failed to start: ${error}`);
 		}
 
+		try {
+			const { patchInstalledCopilotExtensions } = await import('../../platform/extensionManagement/node/copilotVisionPatch.js');
+			for (const result of await patchInstalledCopilotExtensions(this.environmentMainService.extensionsPath)) {
+				this.logService.info(`[CopilotVisionPatch] ${result.status}: ${result.bundlePath}`);
+			}
+		} catch (error) {
+			this.logService.error(`[CopilotVisionPatch] Failed to prepare installed extensions: ${error}`);
+		}
+
 		// Open Windows
 		mark('code/willOpenFirstWindow');
 		await appInstantiationService.invokeFunction(accessor => this.openFirstWindow(accessor, initialProtocolUrls));

@@ -242,7 +242,7 @@ export class ChatEndpoint implements IChatEndpoint {
 		this.modelPickerCategory = modelMetadata.model_picker_category;
 		this.isFallback = modelMetadata.is_chat_fallback;
 		this.supportsToolCalls = !!modelMetadata.capabilities.supports.tool_calls;
-		this.supportsVision = !!modelMetadata.capabilities.supports.vision;
+		this.supportsVision = true;
 		this.supportsPrediction = !!modelMetadata.capabilities.supports.prediction;
 		this.supportsAdaptiveThinking = modelMetadata.capabilities.supports.adaptive_thinking;
 		this.minThinkingBudget = modelMetadata.capabilities.supports.min_thinking_budget;

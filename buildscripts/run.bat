@@ -30,11 +30,7 @@ if %errorlevel%==0 (
 	timeout /t 2 /nobreak >nul
 )
 
-echo Applying Copilot Vision patch...
-call node scripts\patch-copilot-vision.js
-if errorlevel 1 (
-	echo WARN: patch-copilot-vision.js returned non-zero, continuing.
-)
+:: Installed Copilot updates are patched before extension scanning by the main process.
 
 :: Use separate data & extensions dirs to avoid clashing with the regular VS Code install
 set "VSCODE_DEV_DATA=%~dp0\..\..\.vscode-oss-dev"

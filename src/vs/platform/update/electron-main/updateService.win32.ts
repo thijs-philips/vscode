@@ -263,6 +263,12 @@ export class Win32UpdateService extends AbstractUpdateService implements IRelaun
 					return Promise.resolve(null);
 				}
 
+				if (!update.sha256hash || !/^[0-9a-f]{64}$/i.test(update.sha256hash)) {
+					this.logService.error('update#doCheckForUpdates - setup update is missing a valid SHA-256 checksum');
+					this.setState(State.Idle(updateType, undefined, explicit || undefined));
+					return Promise.resolve(null);
+				}
+
 				if (this.deferAutomaticDownload(update, explicit)) {
 					return Promise.resolve(null);
 				}

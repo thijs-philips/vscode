@@ -7,6 +7,8 @@ import { Disposable } from '../../../../base/common/lifecycle.js';
 import { IExtensionGalleryService, IGlobalExtensionEnablementService } from '../../../../platform/extensionManagement/common/extensionManagement.js';
 import { ExtensionStorageService, IExtensionStorageService } from '../../../../platform/extensionManagement/common/extensionStorage.js';
 import { migrateUnsupportedExtensions } from '../../../../platform/extensionManagement/common/unsupportedExtensionsMigration.js';
+import { areSameExtensions } from '../../../../platform/extensionManagement/common/extensionManagementUtil.js';
+import { copilotChatExtensionId, patchCopilotExtensionLocation } from '../../../../platform/extensionManagement/node/copilotVisionPatch.js';
 import { INativeServerExtensionManagementService } from '../../../../platform/extensionManagement/node/extensionManagementService.js';
 import { ILogService } from '../../../../platform/log/common/log.js';
 import { IStorageService } from '../../../../platform/storage/common/storage.js';
@@ -24,6 +26,16 @@ export class ExtensionsContributions extends Disposable {
 	) {
 		super();
 
+		extensionManagementService.registerParticipant({
+			postInstall: async local => {
+				if (!areSameExtensions(local.identifier, { id: copilotChatExtensionId })) {
+					return;
+				}
+				const result = await patchCopilotExtensionLocation(local.location);
+				this.logService.info(`[CopilotVisionPatch] ${result.status}: ${result.bundlePath}`);
+			},
+			postUninstall: async () => { },
+		});
 		extensionManagementService.cleanUp().catch(error => logService.error('Error while cleaning up extensions', error));
 
 		this.migrateUnsupportedExtensions().catch(error => logService.error('Error while migrating unsupported extensions', error));

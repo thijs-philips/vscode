@@ -4,72 +4,18 @@
  *--------------------------------------------------------------------------------------------*/
 
 import type * as http from 'http';
+import { IDisposable } from '../../base/common/lifecycle.js';
+import * as semver from '../../base/common/semver/semver.js';
 import { ILogService } from '../../platform/log/common/log.js';
 import { IProductService } from '../../platform/product/common/productService.js';
-import { IDisposable } from '../../base/common/lifecycle.js';
 
 const DEFAULT_LOCAL_UPDATE_PORT = 58241;
 const DEFAULT_UPDATE_ASSET_PREFIX = 'CodeOSSSetup';
 const GITHUB_API = 'https://api.github.com';
-const TOKEN_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 const RELEASE_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-// ---------------------------------------------------------------------------
-// GitHub authentication via git credential helper
-// ---------------------------------------------------------------------------
-
-interface ITokenCache {
-	token: string;
-	expiresAt: number;
-}
-
-let tokenCache: ITokenCache | undefined;
-
-async function getGitHubTokenFromCredentialHelper(): Promise<string | undefined> {
-	const { spawn } = await import('child_process');
-	return new Promise(resolve => {
-		const child = spawn('git', ['credential', 'fill'], { stdio: ['pipe', 'pipe', 'ignore'] });
-		let stdout = '';
-
-		child.stdout.on('data', (data: Buffer) => {
-			stdout += data.toString();
-		});
-
-		child.on('error', () => resolve(undefined));
-		child.on('close', (code) => {
-			if (code !== 0) {
-				return resolve(undefined);
-			}
-			const match = stdout.match(/^password=(.+)$/m);
-			resolve(match ? match[1].trim() : undefined);
-		});
-
-		child.stdin.write('protocol=https\nhost=github.com\n\n');
-		child.stdin.end();
-	});
-}
-
-async function getGitHubToken(log: ILogService): Promise<string | undefined> {
-	// Check environment variable first
-	const envToken = process.env['GITHUB_TOKEN'];
-	if (envToken) {
-		return envToken;
-	}
-
-	// Check cache
-	if (tokenCache && Date.now() < tokenCache.expiresAt) {
-		return tokenCache.token;
-	}
-
-	// Fetch from git credential helper
-	const token = await getGitHubTokenFromCredentialHelper();
-	if (token) {
-		tokenCache = { token, expiresAt: Date.now() + TOKEN_CACHE_TTL };
-		return token;
-	}
-
-	log.warn('[localUpdateServer] No GitHub token available. Set GITHUB_TOKEN or configure git credentials for github.com');
-	return undefined;
+function getGitHubToken(): string | undefined {
+	return process.env['GITHUB_TOKEN'];
 }
 
 // ---------------------------------------------------------------------------
@@ -79,6 +25,7 @@ async function getGitHubToken(log: ILogService): Promise<string | undefined> {
 interface IGitHubRelease {
 	id: number;
 	tag_name: string;
+	target_commitish: string;
 	name: string;
 	body: string;
 	assets: IGitHubAsset[];
@@ -98,7 +45,7 @@ interface IReleaseCache {
 
 let releaseCache: IReleaseCache | undefined;
 
-async function githubRequest(urlPath: string, token: string): Promise<string> {
+async function githubRequest(urlPath: string, token: string | undefined): Promise<string> {
 	const https = await import('https');
 	return new Promise((resolve, reject) => {
 		const url = new URL(urlPath, GITHUB_API);
@@ -109,7 +56,7 @@ async function githubRequest(urlPath: string, token: string): Promise<string> {
 			headers: {
 				'User-Agent': 'Code-OSS-Update-Server',
 				'Accept': 'application/vnd.github.v3+json',
-				'Authorization': `token ${token}`,
+				...(token ? { 'Authorization': `token ${token}` } : {}),
 			},
 		};
 
@@ -134,7 +81,7 @@ async function githubRequest(urlPath: string, token: string): Promise<string> {
  * Downloads a GitHub release asset's raw content by following the redirect
  * that GitHub returns when using Accept: application/octet-stream.
  */
-async function githubDownloadAssetText(owner: string, repo: string, assetId: number, token: string): Promise<string> {
+async function githubDownloadAssetText(owner: string, repo: string, assetId: number, token: string | undefined): Promise<string> {
 	const https = await import('https');
 	return new Promise((resolve, reject) => {
 		const url = new URL(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/releases/assets/${assetId}`, GITHUB_API);
@@ -145,7 +92,7 @@ async function githubDownloadAssetText(owner: string, repo: string, assetId: num
 			headers: {
 				'User-Agent': 'Code-OSS-Update-Server',
 				'Accept': 'application/octet-stream',
-				'Authorization': `token ${token}`,
+				...(token ? { 'Authorization': `token ${token}` } : {}),
 			},
 		};
 
@@ -189,14 +136,17 @@ async function githubDownloadAssetText(owner: string, repo: string, assetId: num
 	});
 }
 
-async function getLatestRelease(owner: string, repo: string, token: string): Promise<IGitHubRelease> {
-	// Check cache
+async function getLatestRelease(owner: string, repo: string, token: string | undefined): Promise<IGitHubRelease> {
 	if (releaseCache && Date.now() < releaseCache.expiresAt) {
 		return releaseCache.release;
 	}
 
-	const body = await githubRequest(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/releases/latest`, token);
-	const release: IGitHubRelease = JSON.parse(body);
+	const body = await githubRequest(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/releases?per_page=100`, token);
+	const releases: IGitHubRelease[] = JSON.parse(body);
+	const release = selectLatestSemanticRelease(releases);
+	if (!release) {
+		throw new Error('No valid semantic release found');
+	}
 	releaseCache = { release, expiresAt: Date.now() + RELEASE_CACHE_TTL };
 	return release;
 }
@@ -222,6 +172,17 @@ function parseReleaseTag(tag: string): IParsedTag | undefined {
 	return { productVersion: match[1], commit: match[2] };
 }
 
+export function selectLatestSemanticRelease<T extends Pick<IGitHubRelease, 'tag_name'>>(releases: readonly T[]): T | undefined {
+	return releases.reduce<T | undefined>((latest, candidate) => {
+		const candidateTag = parseReleaseTag(candidate.tag_name);
+		if (!candidateTag || !semver.valid(candidateTag.productVersion)) {
+			return latest;
+		}
+		const latestTag = latest ? parseReleaseTag(latest.tag_name) : undefined;
+		return !latestTag || semver.gt(candidateTag.productVersion, latestTag.productVersion) ? candidate : latest;
+	}, undefined);
+}
+
 /**
  * Maps the VS Code platform string to an expected asset name prefix.
  * Platform examples: win32-x64-user, win32-x64-archive, win32-arm64-user
@@ -234,19 +195,40 @@ function getChecksumAssetName(platform: string, assetPrefix: string): string {
 	return `${assetPrefix}-${platform}.exe.sha256`;
 }
 
+export function isNewerReleaseVersion(currentProductVersion: string, releaseProductVersion: string): boolean {
+	return !!semver.valid(currentProductVersion) && !!semver.valid(releaseProductVersion) && semver.gt(releaseProductVersion, currentProductVersion);
+}
+
+export function isExpectedUpdateAssetName(assetName: string, assetPrefix: string): boolean {
+	const escapedAssetPrefix = assetPrefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	return new RegExp(`^${escapedAssetPrefix}-[\\w-]+\\.exe(?:\\.sha256)?$`).test(assetName);
+}
+
+export function parseUpdateChecksum(value: string): string | undefined {
+	const checksum = value.trim().split(/\s+/)[0];
+	return /^[0-9a-f]{64}$/i.test(checksum) ? checksum.toLowerCase() : undefined;
+}
+
+export function resolveReleaseCommit(tagCommit: string, targetCommitish: string): string | undefined {
+	return /^[0-9a-f]{40}$/i.test(targetCommitish) && targetCommitish.startsWith(tagCommit)
+		? targetCommitish.toLowerCase()
+		: undefined;
+}
+
 // ---------------------------------------------------------------------------
 // HTTP Server
 // ---------------------------------------------------------------------------
 
 function handleUpdateCheck(
-	req: http.IncomingMessage,
+	_req: http.IncomingMessage,
 	res: http.ServerResponse,
 	pathParts: string[],
 	port: number,
 	owner: string,
 	repo: string,
 	assetPrefix: string,
-	token: string,
+	currentProductVersion: string,
+	token: string | undefined,
 	log: ILogService,
 ): void {
 	// /api/update/{platform}/{quality}/{commit}
@@ -270,9 +252,7 @@ function handleUpdateCheck(
 				return;
 			}
 
-			// Check if the release commit matches the current commit
-			if (currentCommit.startsWith(parsed.commit) || parsed.commit.startsWith(currentCommit)) {
-				// Already up to date
+			if (!isNewerReleaseVersion(currentProductVersion, parsed.productVersion)) {
 				res.writeHead(204);
 				res.end();
 				return;
@@ -288,18 +268,29 @@ function handleUpdateCheck(
 				return;
 			}
 
-			// Look for SHA256 checksum
 			const checksumName = getChecksumAssetName(platform, assetPrefix);
 			const checksumAsset = release.assets.find(a => a.name === checksumName);
-			let sha256hash: string | undefined;
-			if (checksumAsset) {
-				try {
-					const checksumBody = await githubDownloadAssetText(owner, repo, checksumAsset.id, token);
-					// The .sha256 file contains just the hex hash (possibly with filename)
-					sha256hash = checksumBody.trim().split(/\s+/)[0];
-				} catch {
-					// Continue without checksum
-				}
+			if (!checksumAsset) {
+				log.warn(`[localUpdateServer] No checksum asset '${checksumName}' in release ${release.tag_name}`);
+				res.writeHead(204);
+				res.end();
+				return;
+			}
+			const checksumBody = await githubDownloadAssetText(owner, repo, checksumAsset.id, token);
+			const sha256hash = parseUpdateChecksum(checksumBody);
+			if (!sha256hash) {
+				log.warn(`[localUpdateServer] Invalid checksum asset '${checksumName}' in release ${release.tag_name}`);
+				res.writeHead(204);
+				res.end();
+				return;
+			}
+
+			const fullCommit = resolveReleaseCommit(parsed.commit, release.target_commitish);
+			if (!fullCommit) {
+				log.warn(`[localUpdateServer] Release ${release.tag_name} does not target a matching full commit`);
+				res.writeHead(204);
+				res.end();
+				return;
 			}
 
 			// Build the response — url points to our local download proxy
@@ -307,7 +298,7 @@ function handleUpdateCheck(
 
 			const update = {
 				url: downloadUrl,
-				version: parsed.commit,
+				version: fullCommit,
 				productVersion: parsed.productVersion,
 				sha256hash,
 			};
@@ -329,7 +320,8 @@ function handleDownloadProxy(
 	pathParts: string[],
 	owner: string,
 	repo: string,
-	token: string,
+	assetPrefix: string,
+	token: string | undefined,
 	log: ILogService,
 ): void {
 	// /download/{releaseId}/{assetName}
@@ -343,18 +335,24 @@ function handleDownloadProxy(
 		return;
 	}
 
-	// Validate asset name to prevent path traversal
-	if (!/^CodeOSSSetup-[\w-]+\.exe(\.sha256)?$/.test(decodeURIComponent(assetName))) {
+	let decodedName: string;
+	try {
+		decodedName = decodeURIComponent(assetName);
+	} catch {
+		res.writeHead(400);
+		res.end('Invalid asset name');
+		return;
+	}
+	if (!isExpectedUpdateAssetName(decodedName, assetPrefix)) {
 		res.writeHead(400);
 		res.end('Invalid asset name');
 		return;
 	}
 
-	// Find the asset ID by listing release assets
 	(async () => {
 		const https = await import('https');
-		const release = await getLatestRelease(owner, repo, token);
-		const decodedName = decodeURIComponent(assetName);
+		const releaseBody = await githubRequest(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/releases/${encodeURIComponent(releaseId)}`, token);
+		const release: IGitHubRelease = JSON.parse(releaseBody);
 		const asset = release.assets.find(a => a.name === decodedName);
 		if (!asset) {
 			res.writeHead(404);
@@ -371,8 +369,21 @@ function handleDownloadProxy(
 			headers: {
 				'User-Agent': 'Code-OSS-Update-Server',
 				'Accept': 'application/octet-stream',
-				'Authorization': `token ${token}`,
+				...(token ? { 'Authorization': `token ${token}` } : {}),
 			},
+		};
+		const pipeDownload = (downloadRes: http.IncomingMessage): void => {
+			if (downloadRes.statusCode !== 200) {
+				res.writeHead(downloadRes.statusCode || 502);
+				res.end('Download failed');
+				return;
+			}
+			const contentLength = downloadRes.headers['content-length'];
+			res.writeHead(200, {
+				'Content-Type': 'application/octet-stream',
+				...(contentLength ? { 'Content-Length': contentLength } : {}),
+			});
+			downloadRes.pipe(res);
 		};
 
 		const proxyReq = https.request(options, (proxyRes: http.IncomingMessage) => {
@@ -385,18 +396,7 @@ function handleDownloadProxy(
 					return;
 				}
 				// Follow the redirect — the redirected URL is a signed S3 URL that doesn't need auth
-				https.get(location, (downloadRes: http.IncomingMessage) => {
-					if (downloadRes.statusCode !== 200) {
-						res.writeHead(downloadRes.statusCode || 502);
-						res.end('Download failed');
-						return;
-					}
-					res.writeHead(200, {
-						'Content-Type': 'application/octet-stream',
-						'Content-Length': downloadRes.headers['content-length'] || '',
-					});
-					downloadRes.pipe(res);
-				}).on('error', (err: Error) => {
+				https.get(location, pipeDownload).on('error', (err: Error) => {
 					log.warn(`[localUpdateServer] Download redirect failed: ${err}`);
 					res.writeHead(502);
 					res.end('Download failed');
@@ -404,17 +404,7 @@ function handleDownloadProxy(
 				return;
 			}
 
-			if (proxyRes.statusCode !== 200) {
-				res.writeHead(proxyRes.statusCode || 502);
-				res.end('Download failed');
-				return;
-			}
-
-			res.writeHead(200, {
-				'Content-Type': 'application/octet-stream',
-				'Content-Length': proxyRes.headers['content-length'] || '',
-			});
-			proxyRes.pipe(res);
+			pipeDownload(proxyRes);
 		});
 
 		proxyReq.on('error', (err: Error) => {
@@ -455,12 +445,7 @@ export async function startLocalUpdateServer(
 		return undefined;
 	}
 
-	const token = await getGitHubToken(log);
-	if (!token) {
-		log.warn('[localUpdateServer] No GitHub token available, update server will not start');
-		return undefined;
-	}
-
+	const token = getGitHubToken();
 	const { owner, repo } = releaseRepo;
 	const port = productService.updateServerPort || DEFAULT_LOCAL_UPDATE_PORT;
 	const assetPrefix = productService.updateAssetPrefix || DEFAULT_UPDATE_ASSET_PREFIX;
@@ -472,28 +457,13 @@ export async function startLocalUpdateServer(
 
 		// Route: /api/update/{platform}/{quality}/{commit}
 		if (pathParts[0] === 'api' && pathParts[1] === 'update' && pathParts.length >= 5) {
-			// Refresh token if needed
-			getGitHubToken(log).then(freshToken => {
-				if (!freshToken) {
-					res.writeHead(503);
-					res.end('No GitHub token');
-					return;
-				}
-				handleUpdateCheck(req, res, pathParts, port, owner, repo, assetPrefix, freshToken, log);
-			});
+			handleUpdateCheck(req, res, pathParts, port, owner, repo, assetPrefix, productService.version, token, log);
 			return;
 		}
 
 		// Route: /download/{releaseId}/{assetName}
 		if (pathParts[0] === 'download' && pathParts.length >= 3) {
-			getGitHubToken(log).then(freshToken => {
-				if (!freshToken) {
-					res.writeHead(503);
-					res.end('No GitHub token');
-					return;
-				}
-				handleDownloadProxy(req, res, pathParts, owner, repo, freshToken, log);
-			});
+			handleDownloadProxy(req, res, pathParts, owner, repo, assetPrefix, token, log);
 			return;
 		}
 
@@ -525,7 +495,6 @@ export async function startLocalUpdateServer(
 				dispose: () => {
 					server.close();
 					releaseCache = undefined;
-					tokenCache = undefined;
 				}
 			});
 		});
