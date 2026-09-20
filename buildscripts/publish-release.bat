@@ -9,9 +9,9 @@ echo  so the embedded update server can find it.
 echo.
 echo  What it does:
 echo    0. Bumps the patch version and commits
-echo    1. Runs build-production.bat (app + installer)
+echo    1. Builds Code - OSS and Code - Personal
 echo    2. Creates a GitHub release tagged v{version}-{commit}
-echo    3. Uploads the installer + SHA256 checksum
+echo    3. Uploads both installers + SHA256 checksums
 echo.
 echo  The local update server in Code - OSS checks
 echo  these releases to offer silent auto-updates.
@@ -65,6 +65,28 @@ call node scripts\publish-release.js
 if %ERRORLEVEL% neq 0 (
     echo.
     echo PUBLISH FAILED with exit code %ERRORLEVEL%
+    popd
+    exit /b %ERRORLEVEL%
+)
+
+echo.
+echo Building Code - Personal...
+echo.
+call node scripts\run-with-product-variant.ts personal -- "%ComSpec%" /d /s /c buildscripts\build-production.bat
+if %ERRORLEVEL% neq 0 (
+    echo.
+    echo PERSONAL BUILD FAILED with exit code %ERRORLEVEL%
+    popd
+    exit /b %ERRORLEVEL%
+)
+
+echo.
+echo Publishing Code - Personal to the same GitHub release...
+echo.
+call node scripts\run-with-product-variant.ts personal -- node scripts\publish-release.js
+if %ERRORLEVEL% neq 0 (
+    echo.
+    echo PERSONAL PUBLISH FAILED with exit code %ERRORLEVEL%
     popd
     exit /b %ERRORLEVEL%
 )

@@ -8,7 +8,8 @@ import { ILogService } from '../../platform/log/common/log.js';
 import { IProductService } from '../../platform/product/common/productService.js';
 import { IDisposable } from '../../base/common/lifecycle.js';
 
-const LOCAL_UPDATE_PORT = 58241;
+const DEFAULT_LOCAL_UPDATE_PORT = 58241;
+const DEFAULT_UPDATE_ASSET_PREFIX = 'CodeOSSSetup';
 const GITHUB_API = 'https://api.github.com';
 const TOKEN_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 const RELEASE_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
@@ -225,12 +226,12 @@ function parseReleaseTag(tag: string): IParsedTag | undefined {
  * Maps the VS Code platform string to an expected asset name prefix.
  * Platform examples: win32-x64-user, win32-x64-archive, win32-arm64-user
  */
-function getAssetName(platform: string): string {
-	return `CodeOSSSetup-${platform}.exe`;
+function getAssetName(platform: string, assetPrefix: string): string {
+	return `${assetPrefix}-${platform}.exe`;
 }
 
-function getChecksumAssetName(platform: string): string {
-	return `CodeOSSSetup-${platform}.exe.sha256`;
+function getChecksumAssetName(platform: string, assetPrefix: string): string {
+	return `${assetPrefix}-${platform}.exe.sha256`;
 }
 
 // ---------------------------------------------------------------------------
@@ -244,6 +245,7 @@ function handleUpdateCheck(
 	port: number,
 	owner: string,
 	repo: string,
+	assetPrefix: string,
 	token: string,
 	log: ILogService,
 ): void {
@@ -277,7 +279,7 @@ function handleUpdateCheck(
 			}
 
 			// Find the installer asset for this platform
-			const assetName = getAssetName(platform);
+			const assetName = getAssetName(platform, assetPrefix);
 			const installerAsset = release.assets.find(a => a.name === assetName);
 			if (!installerAsset) {
 				log.info(`[localUpdateServer] No asset '${assetName}' in release ${release.tag_name}. Available: ${release.assets.map(a => a.name).join(', ')}`);
@@ -287,7 +289,7 @@ function handleUpdateCheck(
 			}
 
 			// Look for SHA256 checksum
-			const checksumName = getChecksumAssetName(platform);
+			const checksumName = getChecksumAssetName(platform, assetPrefix);
 			const checksumAsset = release.assets.find(a => a.name === checksumName);
 			let sha256hash: string | undefined;
 			if (checksumAsset) {
@@ -460,7 +462,8 @@ export async function startLocalUpdateServer(
 	}
 
 	const { owner, repo } = releaseRepo;
-	const port = LOCAL_UPDATE_PORT;
+	const port = productService.updateServerPort || DEFAULT_LOCAL_UPDATE_PORT;
+	const assetPrefix = productService.updateAssetPrefix || DEFAULT_UPDATE_ASSET_PREFIX;
 
 	const httpModule = await import('http');
 	const server = httpModule.createServer((req, res) => {
@@ -476,7 +479,7 @@ export async function startLocalUpdateServer(
 					res.end('No GitHub token');
 					return;
 				}
-				handleUpdateCheck(req, res, pathParts, port, owner, repo, freshToken, log);
+				handleUpdateCheck(req, res, pathParts, port, owner, repo, assetPrefix, freshToken, log);
 			});
 			return;
 		}

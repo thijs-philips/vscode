@@ -378,10 +378,15 @@ function packageTask(platform: string, arch: string, sourceFolderName: string, d
 		let all = es.merge(...mergeStreams);
 
 		if (platform === 'win32') {
+			const appIcon = gulp.src(product.win32AppIcon || 'resources/win32/code.ico')
+				.pipe(rename('resources/win32/code.ico'));
+			const appIcon70 = gulp.src(product.win32AppIcon70 || 'resources/win32/code_70x70.png')
+				.pipe(rename('resources/win32/code_70x70.png'));
+			const appIcon150 = gulp.src(product.win32AppIcon150 || 'resources/win32/code_150x150.png')
+				.pipe(rename('resources/win32/code_150x150.png'));
 			all = es.merge(all, gulp.src([
 				'resources/win32/bower.ico',
 				'resources/win32/c.ico',
-				'resources/win32/code.ico',
 				'resources/win32/config.ico',
 				'resources/win32/cpp.ico',
 				'resources/win32/csharp.ico',
@@ -406,10 +411,8 @@ function packageTask(platform: string, arch: string, sourceFolderName: string, d
 				'resources/win32/typescript.ico',
 				'resources/win32/vue.ico',
 				'resources/win32/xml.ico',
-				'resources/win32/yaml.ico',
-				'resources/win32/code_70x70.png',
-				'resources/win32/code_150x150.png'
-			], { base: '.' }));
+				'resources/win32/yaml.ico'
+			], { base: '.' }), appIcon, appIcon70, appIcon150);
 		} else if (platform === 'linux') {
 			const policyDest = gulp.src('.build/policies/linux/**', { base: '.build/policies/linux' })
 				.pipe(rename(f => f.dirname = `policies/${f.dirname}`));
@@ -491,6 +494,7 @@ function packageTask(platform: string, arch: string, sourceFolderName: string, d
 
 			result = es.merge(result, gulp.src('resources/win32/VisualElementsManifest.xml', { base: 'resources/win32' })
 				.pipe(replace('@@VERSIONFOLDER@@', versionedResourcesFolder ? `${versionedResourcesFolder}\\` : ''))
+				.pipe(replace('@@NAME@@', product.nameShort))
 				.pipe(rename(product.nameShort + '.VisualElementsManifest.xml')));
 
 			result = es.merge(result, gulp.src('.build/policies/win32/**', { base: '.build/policies/win32' })
@@ -628,6 +632,11 @@ function prepareCopilotRipgrepShimTask(platform: string, arch: string, destinati
 		const appNodeModulesDir = path.join(appBase, 'node_modules');
 
 		const builtInCopilotExtensionDir = path.join(appBase, 'extensions', 'copilot');
+		const packagedCopilotSdkDir = path.join(builtInCopilotExtensionDir, 'node_modules', '@github', 'copilot', 'sdk');
+		if (!fs.existsSync(packagedCopilotSdkDir)) {
+			const stagedCopilotSdkDir = path.join(root, '.build', 'extensions', 'copilot', 'node_modules', '@github', 'copilot', 'sdk');
+			fs.cpSync(stagedCopilotSdkDir, packagedCopilotSdkDir, { recursive: true });
+		}
 		prepareBuiltInCopilotRipgrepShim(platform, arch, builtInCopilotExtensionDir, appNodeModulesDir);
 	};
 }

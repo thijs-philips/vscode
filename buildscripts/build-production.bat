@@ -18,6 +18,9 @@ echo.
 
 pushd %~dp0\..
 
+for /f "delims=" %%I in ('node -p "require('./product.json').nameShort"') do set "APP_EXE_BASENAME=%%I"
+for /f "delims=" %%I in ('node -p "require('./product.json').win32SetupExeBasename || 'CodeOSSSetup'"') do set "SETUP_EXE_BASENAME=%%I"
+
 :: Step 0 - Ensure signtool.exe (Windows SDK) is on PATH for native dependency patching
 where signtool.exe >nul 2>&1
 if %ERRORLEVEL% neq 0 (
@@ -44,9 +47,9 @@ if %ERRORLEVEL% neq 0 (
     popd
     exit /b 1
 )
-if not exist "..\VSCode-win32-x64\Code - OSS.exe" (
+if not exist "..\VSCode-win32-x64\!APP_EXE_BASENAME!.exe" (
     echo.
-    echo FAILED: Expected output not found: ..\VSCode-win32-x64\Code - OSS.exe
+    echo FAILED: Expected output not found: ..\VSCode-win32-x64\!APP_EXE_BASENAME!.exe
     popd
     exit /b 1
 )
@@ -86,9 +89,9 @@ if %ERRORLEVEL% neq 0 (
     popd
     exit /b 1
 )
-if not exist ".build\win32-x64\user-setup\CodeOSSSetup.exe" (
+if not exist ".build\win32-x64\user-setup\!SETUP_EXE_BASENAME!.exe" (
     echo.
-    echo FAILED: Installer was not produced at .build\win32-x64\user-setup\CodeOSSSetup.exe
+    echo FAILED: Installer was not produced at .build\win32-x64\user-setup\!SETUP_EXE_BASENAME!.exe
     echo         Inno Setup may have failed silently. Check output above for errors.
     popd
     exit /b 1
@@ -98,8 +101,8 @@ echo.
 echo ============================================
 echo  Production build complete!
 echo.
-echo  Standalone app:  ..\VSCode-win32-x64\Code - OSS.exe
-echo  Installer:       .build\win32-x64\user-setup\CodeOSSSetup.exe
+echo  Standalone app:  ..\VSCode-win32-x64\!APP_EXE_BASENAME!.exe
+echo  Installer:       .build\win32-x64\user-setup\!SETUP_EXE_BASENAME!.exe
 echo ============================================
 
 popd

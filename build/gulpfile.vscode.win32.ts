@@ -89,6 +89,8 @@ function buildWin32Setup(arch: string, target: string): task.CallbackTask {
 			Commit: commit,
 			NameVersion: product.win32NameVersion + (target === 'user' ? ' (User)' : ''),
 			ExeBasename: product.nameShort,
+			SetupExeBasename: product.win32SetupExeBasename || 'CodeOSSSetup',
+			AppIconPath: path.join(repoPath, product.win32AppIcon || 'resources/win32/code.ico'),
 			RegValueName: product.win32RegValueName,
 			ShellNameShort: product.win32ShellNameShort,
 			AppMutex: product.win32MutexName,
@@ -149,7 +151,7 @@ function copyInnoUpdater(arch: string) {
 
 function updateIcon(executablePath: string): task.CallbackTask {
 	return cb => {
-		const icon = path.join(repoPath, 'resources', 'win32', 'code.ico');
+		const icon = path.join(repoPath, product.win32AppIcon || 'resources/win32/code.ico');
 		rcedit(executablePath, { icon }, cb);
 	};
 }

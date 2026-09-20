@@ -29,7 +29,9 @@ const { spawn } = require('child_process');
 
 const ROOT = path.join(__dirname, '..');
 const PRODUCT = JSON.parse(fs.readFileSync(path.join(ROOT, 'product.json'), 'utf8'));
-const INSTALLER_PATH = path.join(ROOT, '.build', 'win32-x64', 'user-setup', 'CodeOSSSetup.exe');
+const SETUP_EXE_BASENAME = PRODUCT.win32SetupExeBasename || 'CodeOSSSetup';
+const UPDATE_ASSET_PREFIX = PRODUCT.updateAssetPrefix || 'CodeOSSSetup';
+const INSTALLER_PATH = path.join(ROOT, '.build', 'win32-x64', 'user-setup', `${SETUP_EXE_BASENAME}.exe`);
 const BUILT_PRODUCT_PATH = path.join(ROOT, '..', 'VSCode-win32-x64', 'resources', 'app', 'product.json');
 
 // ---------------------------------------------------------------------------
@@ -261,7 +263,7 @@ async function main() {
 	}
 
 	// Upload installer asset
-	const assetName = 'CodeOSSSetup-win32-x64-user.exe';
+	const assetName = `${UPDATE_ASSET_PREFIX}-win32-x64-user.exe`;
 	const existingAsset = release.assets.find((a) => a.name === assetName);
 	if (existingAsset) {
 		console.log(`Asset ${assetName} already exists, deleting...`);
@@ -273,7 +275,7 @@ async function main() {
 	console.log(`Uploaded ${assetName}`);
 
 	// Upload checksum asset
-	const checksumAssetName = 'CodeOSSSetup-win32-x64-user.exe.sha256';
+	const checksumAssetName = `${UPDATE_ASSET_PREFIX}-win32-x64-user.exe.sha256`;
 	const existingChecksumAsset = release.assets.find((a) => a.name === checksumAssetName);
 	if (existingChecksumAsset) {
 		console.log(`Asset ${checksumAssetName} already exists, deleting...`);

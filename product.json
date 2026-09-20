@@ -7,6 +7,8 @@
 	"sharedDataFolderName": ".vscode-oss-shared",
 	"win32MutexName": "vscodeoss",
 	"updateUrl": "http://127.0.0.1:58241",
+	"updateServerPort": 58241,
+	"updateAssetPrefix": "CodeOSSSetup",
 	"releaseRepository": {
 		"owner": "thijs-philips",
 		"repo": "vscode"
@@ -29,6 +31,10 @@
 	"win32arm64UserAppId": "{{3AEBF0C8-F733-4AD4-BADE-FDB816D53D7B}",
 	"win32AppUserModelId": "Microsoft.CodeOSS",
 	"win32ShellNameShort": "C&ode - OSS",
+	"win32SetupExeBasename": "CodeOSSSetup",
+	"win32AppIcon": "resources/win32/code.ico",
+	"win32AppIcon70": "resources/win32/code_70x70.png",
+	"win32AppIcon150": "resources/win32/code_150x150.png",
 	"win32TunnelServiceMutex": "vscodeoss-tunnelservice",
 	"win32TunnelMutex": "vscodeoss-tunnel",
 	"darwinBundleIdentifier": "com.visualstudio.code.oss",

@@ -98,6 +98,10 @@ export interface IProductConfiguration {
 	readonly win32RegValueName?: string;
 	readonly win32NameVersion?: string;
 	readonly win32VersionedUpdate?: boolean;
+	readonly win32SetupExeBasename?: string;
+	readonly win32AppIcon?: string;
+	readonly win32AppIcon70?: string;
+	readonly win32AppIcon150?: string;
 	readonly win32ContextMenu?: { readonly [arch: string]: { readonly clsid: string } };
 	readonly applicationName: string;
 	readonly embedderIdentifier?: string;
@@ -113,6 +117,8 @@ export interface IProductConfiguration {
 
 	readonly downloadUrl?: string;
 	readonly updateUrl?: string;
+	readonly updateServerPort?: number;
+	readonly updateAssetPrefix?: string;
 	readonly webUrl?: string;
 
 	readonly releaseRepository?: {
