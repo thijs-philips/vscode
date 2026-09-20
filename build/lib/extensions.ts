@@ -478,12 +478,29 @@ export function packageCopilotExtensionStream(): Stream {
 
 	const productionDependencies = getProductionDependencies('extensions/copilot');
 	const dependenciesSrc = productionDependencies.map(d => path.relative(root, d)).map(d => [`${d}/**`, `!${d}/**/{test,tests}/**`]).flat();
+	// Upstream's global module ignore excludes @github/copilot entirely because CI
+	// injects a prebuilt Copilot VSIX. Local fork builds package the extension from
+	// source and still need its SDK JavaScript and package metadata.
+	const copilotRuntimeRoot = 'extensions/copilot/node_modules/@github/copilot';
+	const copilotRuntimeSrc = [
+		`${copilotRuntimeRoot}/**`,
+		`!${copilotRuntimeRoot}/sdk/index.js`,
+		`!${copilotRuntimeRoot}/prebuilds/**`,
+		`!${copilotRuntimeRoot}/clipboard/**`,
+		`!${copilotRuntimeRoot}/ripgrep/**`,
+		`!${copilotRuntimeRoot}/pvrecorder/**`,
+		`!${copilotRuntimeRoot}/foundry-local-sdk/**`,
+		`!${copilotRuntimeRoot}/mxc-bin/**`,
+		`!${copilotRuntimeRoot}/sharp/**`,
+		`!${copilotRuntimeRoot}/**/keytar.node`,
+	];
 
 	return es.merge(
 		localExtensionsStream,
 		gulp.src(dependenciesSrc, { base: '.' })
 			.pipe(util2.cleanNodeModules(path.join(root, 'build', '.moduleignore')))
-			.pipe(util2.cleanNodeModules(path.join(root, 'build', `.moduleignore.${process.platform}`)))
+			.pipe(util2.cleanNodeModules(path.join(root, 'build', `.moduleignore.${process.platform}`))),
+		gulp.src(copilotRuntimeSrc, { base: '.', dot: true })
 	).pipe(util2.setExecutableBit(['**/*.sh']));
 }
 
