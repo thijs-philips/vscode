@@ -43,12 +43,41 @@ export interface IChatContentPart extends IDisposable {
 	addDisposable?(disposable: IDisposable): void;
 }
 
+/** Diff resource emitted by an edit-rendering content part. */
+export interface IChatContentPartDiffResource {
+	readonly resource: URI;
+	readonly originalURI: URI | undefined;
+	readonly modifiedURI: URI | undefined;
+}
+
+/** Aggregated diff data emitted by an edit-rendering content part. */
+export interface IChatContentPartDiffData {
+	readonly added: number;
+	readonly removed: number;
+	readonly resources: readonly IChatContentPartDiffResource[];
+}
+
+/**
+ * A content part whose edits contribute to aggregated statistics. Consumers read `diffData`
+ * when they attach, because the change event may already have fired during construction
+ * (for example when an editing session restores finalized diffs synchronously).
+ */
+export interface IChatContentPartDiffSource {
+	readonly onDidChangeDiff: Event<IChatContentPartDiffData>;
+	readonly diffData: IChatContentPartDiffData | undefined;
+}
+
 export interface IChatContentPartRenderContext {
 	readonly element: IChatRequestViewModel | IChatResponseViewModel;
+	readonly readOnly?: boolean;
 	readonly elementIndex: number;
 	readonly container: HTMLElement;
 	readonly content: ReadonlyArray<IChatRendererContent>;
 	readonly contentIndex: number;
+	/** Whether the response-level progress indicator owns progress animation for this render. */
+	readonly suppressProgressShimmer?: boolean;
+	/** An expanded, headerless tool group in the persistent progress layout. */
+	readonly isToolChain?: boolean;
 	readonly editorPool: EditorPool;
 	readonly codeBlockStartIndex: number;
 	readonly treeStartIndex: number;

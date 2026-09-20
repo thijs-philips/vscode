@@ -59,6 +59,17 @@ abstract class ToolConfirmationAction extends Action2 {
 		const widget = context?.sessionResource
 			? chatWidgetService.getWidgetBySessionResource(context.sessionResource)
 			: chatWidgetService.lastFocusedWidget;
+		const activeConfirmation = widget?.inputPart.activeToolConfirmation;
+		if (activeConfirmation) {
+			const reason = this.getReason();
+			if (reason.type === ToolConfirmKind.UserAction) {
+				widget.inputPart.acceptActiveToolConfirmation();
+			} else {
+				IChatToolInvocation.confirmWith(activeConfirmation, reason);
+			}
+			widget.focusInput();
+			return;
+		}
 		const lastItem = widget?.viewModel?.getItems().at(-1);
 		if (!isResponseVM(lastItem)) {
 			return;
@@ -126,7 +137,7 @@ export class ConfigureToolsAction extends Action2 {
 		super({
 			id: ConfigureToolsAction.ID,
 			title: localize('label', "Configure Tools..."),
-			icon: Codicon.settings,
+			icon: Codicon.settingsCompact,
 			f1: false,
 			category: CHAT_CATEGORY,
 			precondition: ChatContextKeys.chatModeKind.isEqualTo(ChatModeKind.Agent),
