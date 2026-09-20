@@ -193,6 +193,7 @@
 			"menuAccess"
 		],
 		"GitHub.copilot": [
+			"devDeviceId",
 			"inlineCompletionsAdditions"
 		],
 		"GitHub.copilot-chat": [
