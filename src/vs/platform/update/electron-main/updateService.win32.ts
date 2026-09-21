@@ -36,6 +36,7 @@ import { ITelemetryService } from '../../telemetry/common/telemetry.js';
 import { AvailableForDownload, DisablementReason, IUpdate, State, StateType, UpdateType } from '../common/update.js';
 import { AbstractUpdateService, createUpdateURL, getUpdateRequestHeaders, IUpdateURLOptions, UpdateErrorClassification } from './abstractUpdateService.js';
 import { getRelaunchArguments } from './updateRelaunchArguments.js';
+import { getWin32UpdateCachePath } from './win32UpdateCache.js';
 import { getWin32UpdateType } from './win32UpdateType.js';
 
 interface IAvailableUpdate {
@@ -63,7 +64,7 @@ export class Win32UpdateService extends AbstractUpdateService implements IRelaun
 	private readonly setupMutexName: string;
 
 	private get cachePathSync(): string {
-		return path.join(tmpdir(), `vscode-${this.productService.quality}-${this.productService.target}-${process.arch}`);
+		return getWin32UpdateCachePath(tmpdir(), this.productService.applicationName, this.productService.quality, this.productService.target, process.arch);
 	}
 
 	@memoize

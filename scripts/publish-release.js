@@ -48,11 +48,17 @@ function getCommit() {
 		.trim();
 }
 
-function hasUncommittedChanges() {
-	const status = require('child_process')
+function getUnexpectedUncommittedChanges() {
+	const entries = require('child_process')
 		.execSync('git status --porcelain', { cwd: ROOT, encoding: 'utf8' })
-		.trim();
-	return status.length > 0;
+		.trim()
+		.split(/\r?\n/)
+		.filter(Boolean);
+
+	if (process.env['VSCODE_PRODUCT_VARIANT']) {
+		return entries.filter(entry => entry.substring(3) !== 'product.json');
+	}
+	return entries;
 }
 
 function sha256File(filePath) {
@@ -179,8 +185,9 @@ async function main() {
 	console.log(`Repository: ${owner}/${repo}`);
 	console.log();
 
-	if (hasUncommittedChanges()) {
-		throw new Error('Refusing to publish from a dirty working tree. Commit all source changes, rebuild, then publish.');
+	const unexpectedChanges = getUnexpectedUncommittedChanges();
+	if (unexpectedChanges.length > 0) {
+		throw new Error(`Refusing to publish from a dirty working tree. Commit all source changes, rebuild, then publish.\n${unexpectedChanges.join('\n')}`);
 	}
 
 	// Verify installer exists
