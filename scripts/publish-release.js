@@ -51,9 +51,8 @@ function getCommit() {
 function getUnexpectedUncommittedChanges() {
 	const entries = require('child_process')
 		.execSync('git status --porcelain', { cwd: ROOT, encoding: 'utf8' })
-		.trim()
 		.split(/\r?\n/)
-		.filter(Boolean);
+		.filter(entry => entry.length > 0);
 
 	if (process.env['VSCODE_PRODUCT_VARIANT']) {
 		return entries.filter(entry => entry.substring(3) !== 'product.json');
