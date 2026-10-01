@@ -119,16 +119,25 @@ function computeChecksum(filename: string): string {
 // (`foundry_local_napi.node`) inside its tarball, and its native core libraries
 // are fetched per-RID into `foundry-local-core/<platform>-<arch>/` at install
 // time. The addon requires a newer glibc than VS Code's minimum supported Linux
-// distros, so we deliberately do NOT ship any of this native payload: it is
-// downloaded on demand at runtime, only on supported platforms, into a per-user
-// cache (see `src/vs/platform/localTranscription/node/foundryLocalRuntime.ts`).
-// Exclude every prebuilt addon and core library from the package here.
-function getFoundryLocalExcludeFilter(): string[] {
-	return [
-		'**',
-		'!**/foundry-local-sdk/prebuilds/**',
-		'!**/foundry-local-sdk/foundry-local-core/**',
-	];
+// distros, so Linux ships no native payload at all and downloads it on demand
+// instead (see `src/vs/platform/localTranscription/node/foundryLocalRuntime.ts`).
+// Other platforms have no such floor, so they ship the payload for the target
+// being built and drop every other RID.
+const foundryLocalTargets = ['darwin-arm64', 'linux-arm64', 'linux-x64', 'win32-arm64', 'win32-x64'];
+
+function getFoundryLocalExcludeFilter(platform: string, arch: string): string[] {
+	const shippedTarget = platform === 'linux' ? undefined : `${platform}-${arch}`;
+	const filters = ['**'];
+
+	for (const target of foundryLocalTargets) {
+		if (target === shippedTarget) {
+			continue;
+		}
+		filters.push(`!**/foundry-local-sdk/prebuilds/${target}/**`);
+		filters.push(`!**/foundry-local-sdk/foundry-local-core/${target}/**`);
+	}
+
+	return filters;
 }
 
 function packageTask(platform: string, arch: string, sourceFolderName: string, destinationFolderName: string, _opts?: { stats?: boolean }) {
@@ -258,7 +267,7 @@ function packageTask(platform: string, arch: string, sourceFolderName: string, d
 			.pipe(filter(getCopilotTgrepExcludeFilter(platform, arch)))
 			.pipe(filter(getRipgrepExcludeFilter(platform, arch)))
 			.pipe(filter(getMxcExcludeFilter(arch)))
-			.pipe(filter(getFoundryLocalExcludeFilter()))
+			.pipe(filter(getFoundryLocalExcludeFilter(platform, arch)))
 			.pipe(filter(getOSProxyResolverExcludeFilter(platform, arch)))
 			.pipe(jsFilter)
 			.pipe(util.rewriteSourceMappingURL(sourceMappingURLBase))
@@ -268,6 +277,9 @@ function packageTask(platform: string, arch: string, sourceFolderName: string, d
 				'**/@vscode/ripgrep-universal/bin/**',
 				// The SDK runtime wrapper and native module must remain adjacent on disk.
 				'**/@github/copilot-sdk-{darwin,linux,linuxmusl,win32}-*/**',
+				// The Foundry Local addon resolves its core libraries by path and loads
+				// them natively, which cannot read through the ASAR.
+				'**/foundry-local-sdk/**',
 				// The Dev Container CLI is spawned as an external Node process,
 				// so its bundled entrypoint must be available outside the ASAR.
 				'**/@devcontainers/cli/**',
