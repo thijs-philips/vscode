@@ -62,6 +62,7 @@ export interface IExtensionHostInitData {
 export interface IEnvironment {
 	isExtensionDevelopmentDebug: boolean;
 	appName: string;
+	oauthClientName?: string;
 	appHost: string;
 	appRoot?: URI;
 	appLanguage: string;

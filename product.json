@@ -2,6 +2,7 @@
 	"quality": "stable",
 	"nameShort": "Code - OSS",
 	"nameLong": "Code - OSS",
+	"oauthClientName": "Visual Studio Code",
 	"applicationName": "code-oss",
 	"dataFolderName": ".vscode-oss",
 	"sharedDataFolderName": ".vscode-oss-shared",

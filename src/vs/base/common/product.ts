@@ -104,6 +104,8 @@ export interface IProductConfiguration {
 
 	readonly nameShort: string;
 	readonly nameLong: string;
+	/** Overrides `nameLong` as the `client_name` sent during OAuth dynamic client registration. */
+	readonly oauthClientName?: string;
 
 	readonly win32AppUserModelId?: string;
 	readonly win32MutexName?: string;
