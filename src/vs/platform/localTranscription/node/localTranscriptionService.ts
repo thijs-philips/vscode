@@ -8,6 +8,7 @@ import { Disposable, toDisposable } from '../../../base/common/lifecycle.js';
 import { CancellationTokenSource } from '../../../base/common/cancellation.js';
 import { VSBuffer } from '../../../base/common/buffer.js';
 import { dirname, join } from '../../../base/common/path.js';
+import { getAppNodeModulesUri } from '../../agentHost/node/appNodeModules.js';
 import { ensureFoundryLocalRuntime } from './foundryLocalRuntime.js';
 import {
 	ILocalTranscriptionModelStatus,
@@ -69,6 +70,15 @@ function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promi
  */
 function runtimeCacheDir(modelCacheDir: string): string {
 	return join(dirname(modelCacheDir), 'chatDictationRuntime');
+}
+
+/**
+ * Directory of the Foundry Local SDK package shipped with the product. The core
+ * libraries are loaded by the OS linker, which cannot read inside
+ * `node_modules.asar`, so this must resolve to the unpacked copy on disk.
+ */
+function bundledRuntimeDir(): string {
+	return join(getAppNodeModulesUri().fsPath, 'foundry-local-sdk');
 }
 
 /**
@@ -527,18 +537,17 @@ export class LocalTranscriptionService extends Disposable implements ILocalTrans
 				// The model cache state is unknown until the catalog is queried.
 				this._setStatus({ state: LocalTranscriptionModelState.Loading });
 
-				// Ensure the Foundry Local native runtime (N-API addon + core
-				// libraries) is available before loading the SDK. We do not ship
-				// it — the addon requires a newer glibc than our minimum supported
-				// Linux distros — so in packaged builds it is downloaded on demand
-				// from VS Code's CDN (per `product.dictationRuntime`) into a
-				// per-user cache and the SDK loader is pointed at it via env var.
-				// This is a no-op once cached. In dev builds (no product config)
-				// the SDK resolves its addon + core libs from node_modules, so we
-				// skip provisioning and leave the loader on its default path.
+				// Point the SDK loader at a real directory holding the native addon
+				// and core libraries before importing it. When
+				// `product.dictationRuntime` is configured they are downloaded on
+				// demand into a per-user cache (a no-op once cached); otherwise they
+				// ship with the product. Both lookups fall back to the SDK's own
+				// resolution when the directory holds no payload.
 				if (this._runtimeDownload) {
 					const nativeDir = await ensureFoundryLocalRuntime(runtimeCacheDir(cacheDir), this._runtimeDownload, cts.token);
 					process.env.VSCODE_FOUNDRY_LOCAL_NATIVE_DIR = nativeDir;
+				} else {
+					process.env.VSCODE_FOUNDRY_LOCAL_NATIVE_DIR = bundledRuntimeDir();
 				}
 
 				if (!this._sdk) {
